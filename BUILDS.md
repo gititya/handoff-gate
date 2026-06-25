@@ -1,6 +1,18 @@
 # BUILDS.md — Handoff Quality Gate
 
-**Repo:** `gititya/handoff_agent` · **Working dir:** `handoff-engine` · **Status:** Phase 0 locked, Phase 1 not started
+```yaml
+status: "in-progress"
+current_state: "Phases 0–1 + 3 shipped. AI→human gate (Contract A) runs end-to-end: reconstruct → route → grade → intercept-and-hold → corrected note → release, plus a weekly roll-up over the 10-case batch."
+next_action: "Decide Phase 2: generate B2C product-bug cases upstream so Contract B (human→eng) can be built — it is blocked, not buildable today."
+things_to_know:
+  - "Contract B is a B2C PRODUCT-BUG hop, not billing; no B2C product-bug data exists yet (generator is billing-only, realtime fixtures are B2B/off-limits)."
+  - "Roll-up's real finding: AI handoffs drop structured account/subscription IDs (not present in the transcript it reads); the gate catches + fills them."
+  - "Phase 4 (non-technical presentation polish) not started."
+updated_at: "2026-06-25"
+updated_by: "claude"
+```
+
+**Repo:** `gititya/handoff_agent` · **Working dir:** `handoff-engine` · **Status:** Phases 0–1 + 3 shipped; Phase 2 deferred (data blocker); Phase 4 not started
 
 ## What this is
 The **Handoff Quality Gate** — the capstone of the customer-support AI portfolio. A vendor-neutral checkpoint that, at the moment a support case is handed off (AI→human), reconstructs the case, grades the handoff note against the right checklist, and **blocks it with a corrected version if incomplete**. A quality machine, not a responding machine. It never talks to the customer.
@@ -24,5 +36,12 @@ The new build here = the bridge: **router (Step 2) + gate decision & corrected-n
 - **Phase 2 — Contract B (human→eng)** ⬜ DEFERRED. It's a B2C *product-bug* hop; no B2C product-bug data exists yet (generator is billing-only; realtime fixtures are B2B/off-limits). Blocked until that data is generated upstream.
 - **Phase 4** ⬜ presentation pass.
 
+## What's NOT done (call-outs)
+- **Phase 2 — Contract B (human→eng)** ⬜ DEFERRED, blocked on data. It's a B2C *product-bug* hop; no B2C product-bug cases or `human_to_engineering` answer key exist. Needs upstream generation in `support-call-generator`. The realtime B2B fixtures are NOT a valid source (off-limits per CLAUDE.md).
+- **Phase 4 — presentation pass** ⬜ not started. Make the demo + roll-up output legible to a non-technical reviewer (before/after handoff, named gap, weekly pattern). Taste-dependent; awaiting direction.
+- **Roll-up depth** — single batch over 10 cases, Contract A only; no time-series / multi-week trend (synthetic, one batch).
+- **Judge in the roll-up** — defaults OFF for speed; `--with-judge` exists but not the default signal. Field-presence check is the primary gate.
+- **Review pass** — Phase 3 was built on Opus directly (user-approved), bypassing the usual "Sonnet builds, Opus reviews" split; no separate `/review` run yet.
+
 ## Next action
-Open PR for `feat/phase-3-rollup`, Opus review. Phase 2 (Contract B) blocked on generating B2C product-bug cases upstream in `support-call-generator`.
+Decide Phase 2: commission B2C product-bug case generation upstream so Contract B can be built. Everything else for the AI→human hop is shipped.
