@@ -18,9 +18,9 @@ The new build here = the bridge: **router (Step 2) + gate decision & corrected-n
 
 ## Status by phase
 - **Phase 0 — Lock contracts** ✅ DONE. Contract A locked + verified 1:1 against the seed pack. Key decision: field-6 leniency is **derived from reconstructed evidence**, not a metadata label; gate measures **completeness, not effort**; borderline → lenient-but-flagged. Contract B (human→eng) deferred to Phase 2. Contracts live in the Obsidian vault (`Customer support/handoff agent/Handoff Quality Gate — Contracts.md`).
-- **Phase 0.5 — Anchor case** ⬜ next. Review one hard seed case (no regeneration).
-- **Phase 1 — Hero demo** ⬜ smallest runnable slice, end-to-end, ~90s, shows intercept-and-hold + side-by-side thin vs corrected handoff.
+- **Phase 0.5 — Anchor case** ✅ DONE (2026-06-25). Hero: `call_61772f4783` (strict arm). Contrast: `call_3835c4f220` (lenient + borderline).
+- **Phase 1 — Hero demo** ✅ DONE (2026-06-25). End-to-end in <50s (skip-judge) or ~44s (MLX judge). Intercept-and-hold verified on both anchor cases. PR #1 open. Branch: `feat/phase-1-hero-demo`. Commit: `d30d845`.
 - **Phases 2–4** ⬜ second hop (human→eng), weekly roll-up, presentation pass.
 
 ## Next action
-Phase 0.5 → Phase 1. Sonnet builds, Opus reviews (standard: Sonnet builds, Opus reviews, Codex cross-checks).
+Opus review pass (`/model opus` → `/review` on Phase 1 diff). Then Phase 2: author + lock Contract B (human→eng, by bug-class).
