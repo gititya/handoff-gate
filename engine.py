@@ -11,18 +11,25 @@ Does NOT import or edit real-time_support_Updated.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 
-FIXTURE_BASE = Path(__file__).resolve().parent.parent / (
+# Default discovery path for the Flow-1 (B2C billing) seed pack. This used to be
+# the ONLY way the gate got a case — a hard reach into the generator repo's
+# internal export dir. It is now just a *default*: the runner hands fixtures in
+# directly (reconstruct_fixture) or overrides the base via HANDOFF_FIXTURE_BASE,
+# so the gate no longer depends on another repo's filesystem layout.
+_DEFAULT_FIXTURE_BASE = Path(__file__).resolve().parent.parent / (
     "support-call-generator/exports/b2c_handoff_gate_seed"
     "/process_fixture/realtime_support"
 )
+FIXTURE_BASE = Path(os.environ.get("HANDOFF_FIXTURE_BASE", str(_DEFAULT_FIXTURE_BASE)))
 
 
-def load_fixture(case_id: str) -> dict[str, Any]:
-    path = FIXTURE_BASE / f"{case_id}.json"
+def load_fixture(case_id: str, base: Path | None = None) -> dict[str, Any]:
+    path = (base or FIXTURE_BASE) / f"{case_id}.json"
     return json.loads(path.read_text())
 
 
@@ -140,10 +147,15 @@ def apply_context_event(state: dict[str, Any], event: dict[str, Any]) -> None:
 
 # --- reconstruction entry point ---
 
-def reconstruct(case_id: str) -> dict[str, Any]:
-    """Replay context_events from the B2C fixture to build the
-    authoritative reconstructed state. Deterministic, no LLM."""
-    fixture = load_fixture(case_id)
+def reconstruct_fixture(fixture: dict[str, Any]) -> dict[str, Any]:
+    """Replay context_events from an already-loaded fixture to build the
+    authoritative reconstructed state. Deterministic, no LLM.
+
+    This is the decoupled seam: the runner hands a fixture dict in, so the
+    gate never reaches into another repo's export directory. Works on both
+    the B2C billing pack and B2B product-bug fixtures (both carry the same
+    context_events shape: facts / resolved_unknowns / *_branches / final_cause)."""
+    case_id = fixture.get("case_id", "unknown")
     state = new_state(case_id)
 
     for event in fixture.get("context_events", []):
@@ -151,3 +163,9 @@ def reconstruct(case_id: str) -> dict[str, Any]:
 
     state["_fixture"] = fixture
     return state
+
+
+def reconstruct(case_id: str, base: Path | None = None) -> dict[str, Any]:
+    """Back-compat convenience for Flow 1: load the B2C fixture by id from the
+    seed pack, then reconstruct. New callers should prefer reconstruct_fixture."""
+    return reconstruct_fixture(load_fixture(case_id, base=base))

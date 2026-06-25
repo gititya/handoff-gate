@@ -36,3 +36,19 @@ Not a chatbot / responding agent / generic dashboard. One issue type for the her
 - Ask before destroying (git reset, deletes, force push). No secrets/PII committed.
 - Branch off `main`, never push to `main` directly — use a PR. Confirm before commit/push.
 - Model rule: Sonnet builds, Opus reviews, Codex cross-checks.
+
+---
+
+## SUPERSEDED — 2026-06-26 · B2B is in-bounds; Contract B is B2B (integration stance)
+
+> Append-only. Two earlier statements above are now **history, not instruction**, retained for provenance:
+> 1. *"ENGINE REUSE ONLY … Do NOT import its B2B domain layer (`fixtures/`)"* — superseded.
+> 2. The implication that Contract B is B2C — superseded.
+
+The portfolio moved from an **isolation** stance to an **integration** stance (user-approved, 2026-06-26): the repos are being connected into one pipeline by a thin deterministic runner in `customer-support-ai-os`. Under integration:
+
+- **The realtime B2B fixtures are IN-BOUNDS.** They are the natural Flow-2 (product-bug) source because the copilot only reconstructs that domain.
+- **Contract B is a B2B product-bug human→engineering handoff** (see `contracts.py::check_handoff_b`, anchors in `contract_b_anchors/`).
+- **The copilot is called, not re-implemented.** Flow-2 reconstruction is `real-time_support_Updated/run.py::run_fixture` (subprocess via the runner). The vendored `engine.py` replay stays for Flow-1 billing / fast deterministic checks.
+- **The judge is soft evidence, not a hard blocker** (mechanical contract check is the release gate).
+- Still true and unchanged: PR-only (never push to `main`), confirm before commit/push, no secrets/PII, honest "I built the components" framing. Authoritative plan: `~/.claude/plans/breezy-petting-thimble.md`.

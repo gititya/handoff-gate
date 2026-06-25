@@ -24,7 +24,15 @@ def _generate_corrected_note(
     judge_verdict: dict[str, Any] | None,
     state: dict[str, Any],
 ) -> dict[str, Any]:
-    """Generate a corrected handoff note via live Claude call."""
+    """Generate a corrected handoff note via live Claude call.
+
+    ORACLE-ASSISTED (eval-lab assumption): the correction prompt is handed the
+    `expected` answer key directly (see below). That is legitimate for an
+    evaluation lab where ground truth exists, but it does NOT prove a production
+    gate could self-correct from operational evidence (reconstruction + transcript)
+    alone. Production-grade correction would drop `expected` and rely only on the
+    reconstructed state. Kept here to demonstrate the intercept-and-hold mechanics.
+    """
     missing = gap_report.missing_fields
     judge_gaps = []
     if judge_verdict:
@@ -91,6 +99,10 @@ class HandoffPackage:
         self.blocked = False
         self.gap_report: GapReport | None = None
         self.judge_verdict: dict[str, Any] | None = None
+        # Soft signal: the judge disagreed (or couldn't run). Does NOT block
+        # release — it routes the released handoff to a human for review.
+        self.human_review_flag = False
+        self.human_review_reason = ""
 
     def release(self) -> None:
         self.released = True
@@ -115,21 +127,38 @@ def run_gate(
     expected: dict[str, Any],
     state: dict[str, Any],
     judge_verdict: dict[str, Any] | None,
+    check_fn=check_handoff,
 ) -> HandoffPackage:
-    """Run the gate: check, block if needed, correct, release."""
+    """Run the gate: check, block if needed, correct, release.
+
+    The HARD blocker is the mechanical contract check (`check_fn`) — deterministic,
+    always available. The judge is EVIDENCE, not a release condition: if it
+    disagrees (or couldn't run), the handoff still releases when mechanically
+    complete, but carries a human_review_flag. This keeps local-MLX availability,
+    latency, and parse errors out of the release path. Pass check_handoff_b for
+    Contract B (human→engineering).
+    """
     package = HandoffPackage(case_id, candidate)
     package.judge_verdict = judge_verdict
 
-    gap_report = check_handoff(candidate, expected, state)
+    gap_report = check_fn(candidate, expected, state)
     package.gap_report = gap_report
 
-    judge_failed = judge_verdict and not judge_verdict.get("pass", True)
+    # Judge = soft signal. A disagreement routes to a human; it does not block.
+    if judge_verdict is not None and not judge_verdict.get("pass", True):
+        package.human_review_flag = True
+        package.human_review_reason = (
+            judge_verdict.get("missing_requirement")
+            or judge_verdict.get("evidence_gap")
+            or "judge disagreed with completeness"
+        )
 
-    if gap_report.passed and not judge_failed:
+    if gap_report.passed:
+        # Mechanically complete → release (flagged for human review if the judge dissented).
         package.release()
         return package
 
-    # BLOCKED — intercept and hold. Release only after a verified correction.
+    # BLOCKED on mechanical gaps — intercept and hold. Release only after a verified correction.
     package.blocked = True
 
     corrected = _generate_corrected_note(
@@ -140,7 +169,7 @@ def run_gate(
     # Re-check the corrected note before releasing — the hold stands until the
     # gaps are actually filled.
     if not corrected.get("_parse_error"):
-        recheck = check_handoff(corrected, expected, state)
+        recheck = check_fn(corrected, expected, state)
         if recheck.passed:
             package.release()
 

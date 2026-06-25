@@ -1,0 +1,34 @@
+{
+  "schema_version": "contract_b_anchor.v1",
+  "case_id": "level2_unresolved_workspace_handoff",
+  "source_fixture": "real-time_support_Updated/fixtures/level2_unresolved_workspace_handoff.json",
+  "leniency_arm": "lenient",
+  "derivation_note": "Hand-derived from the fixture's context_events + handoff_summary. Login, role, and SCIM are ruled out but the mechanism is not yet proven (final_cause=''), so this handoff must state the open state and the remaining branches, not name a cause.",
+  "expected_handoff": {
+    "human_to_engineering": {
+      "customer_account_identity": "Three migrated users, post-migration",
+      "affected_scope": "Three migrated users — can sign in but cannot open the workspace",
+      "system_discrepancy": "Users authenticate successfully, have the workspace role, and SCIM sync is complete, yet workspace access still fails. Auth, role assignment, and sync are all healthy but access is denied.",
+      "evidence_handles": [
+        "auth:works",
+        "workspace_role:present",
+        "scim_sync:complete"
+      ],
+      "support_ruled_out": [
+        "login_block",
+        "login_failure",
+        "missing_workspace_role",
+        "missing_workspace_role_inheritance",
+        "scim_sync_delay"
+      ],
+      "likely_cause": "Undetermined — stale_entitlement_cache vs upstream_service_incident both remain open; cache or service-side evidence still needed.",
+      "confidence": "low (open)",
+      "open_unknowns": [
+        "entitlement_cache_status",
+        "upstream_service_incident_status"
+      ],
+      "impact_urgency": "Elevated — three users blocked immediately after migration",
+      "specific_ask": "Investigate entitlement cache freshness for these users and check for an upstream service incident affecting workspace access; one of those two branches is the mechanism."
+    }
+  }
+}

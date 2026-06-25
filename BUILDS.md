@@ -45,3 +45,14 @@ The new build here = the bridge: **router (Step 2) + gate decision & corrected-n
 
 ## Next action
 Decide Phase 2: commission B2C product-bug case generation upstream so Contract B can be built. Everything else for the AI→human hop is shipped.
+
+---
+
+## SUPERSEDED — 2026-06-26 · Contract B is now B2B (integration stance)
+
+> Append-only. The "Phase 2 deferred / B2B off-limits / commission B2C product-bug data" lines above are **history.** This note governs.
+
+Stance moved from isolation to **integration**: the repos are being wired into one pipeline (thin runner). Consequences:
+- **Contract B re-spec'd as B2B product-bug (human→engineering).** Realtime's B2B fixtures are now the valid source; the copilot reconstructs them live. The "off-limits" guard is retired.
+- **Phase 1 of the integration plan is done in this repo:** decoupled `engine.py`, locked Contract B (`check_handoff_b`) in `contracts.py`, 3 hand-authored gold anchors in `contract_b_anchors/`, judge demoted to soft-flag (mechanical check is the sole blocker), oracle-assist labeled in `gate.py`. All verified deterministically.
+- **Pending:** the runner (`customer-support-ai-os`), then the generator B2B scenario to scale beyond the 3 anchors. Full plan: `~/.claude/plans/breezy-petting-thimble.md`.

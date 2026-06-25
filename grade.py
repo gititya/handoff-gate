@@ -31,10 +31,19 @@ JUDGE_ID = "handoff_completeness"
 RUBRIC = "detailed_with_examples"
 
 
+# Judge adapter contract: the handoff_completeness judge expects
+# {ticket, agent_response, handoff_note, tool_context}. These defaults describe
+# Flow 1 (B2C billing); Flow 2 passes a B2B product-bug ticket/summary.
+TICKET_A = "B2C disputed charge case"
+AGENT_SUMMARY_A = "Agent worked the case and produced a handoff note."
+
+
 def build_judge_example(
     transcript_turns: list[dict[str, Any]],
     candidate_handoff: dict[str, Any],
     reconstructed_state: dict[str, Any],
+    ticket_label: str = TICKET_A,
+    agent_summary: str = AGENT_SUMMARY_A,
 ) -> dict[str, Any]:
     transcript_text = "\n".join(
         f"[{t.get('speaker', 'unknown').upper()}] {t['text']}"
@@ -55,8 +64,8 @@ def build_judge_example(
         "judge_id": JUDGE_ID,
         "example_id": reconstructed_state.get("case_id", "unknown"),
         "label": True,
-        "ticket": f"B2C disputed charge case: {reconstructed_state.get('case_id', '')}",
-        "agent_response": "Agent worked the case and produced a handoff note.",
+        "ticket": f"{ticket_label}: {reconstructed_state.get('case_id', '')}",
+        "agent_response": agent_summary,
         "conversation": transcript_text,
         "handoff_note": handoff_text,
         "tool_context": json.dumps(state_summary),
@@ -68,10 +77,13 @@ def grade_handoff(
     transcript_turns: list[dict[str, Any]],
     candidate_handoff: dict[str, Any],
     reconstructed_state: dict[str, Any],
+    ticket_label: str = TICKET_A,
+    agent_summary: str = AGENT_SUMMARY_A,
 ) -> dict[str, Any]:
     """Grade a candidate handoff note using the local MLX judge."""
     example = build_judge_example(
-        transcript_turns, candidate_handoff, reconstructed_state
+        transcript_turns, candidate_handoff, reconstructed_state,
+        ticket_label=ticket_label, agent_summary=agent_summary,
     )
     prompt = build_prompt(JUDGE_ID, RUBRIC, example)
     raw = run_inference(PRIMARY_MODEL, prompt)

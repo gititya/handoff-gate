@@ -77,6 +77,31 @@ def derive_leniency(state: dict[str, Any]) -> LeniencyRule:
     )
 
 
+# --- Contract B — human → engineering (B2B product-bug escalation) ---
+#
+# Added under the integration stance (see SKILL.md SUPERSEDED note): the copilot
+# (real-time_support_Updated) works a B2B product-bug case and the human escalates
+# to engineering. The leniency rule is the SAME derive_leniency() as Contract A —
+# strict when reconstructed evidence pinned the cause, lenient (but explicit about
+# the open state) when it did not.
+
+ALWAYS_REQUIRED_KEYS_B = [
+    "customer_account_identity",
+    "affected_scope",
+    "system_discrepancy",
+    "evidence_handles",
+    "specific_ask",
+]
+
+ALL_REQUIRED_KEYS_B = ALWAYS_REQUIRED_KEYS_B + [
+    "support_ruled_out",
+    "impact_urgency",
+    "likely_cause",
+    "confidence",
+    # open_unknowns is conditionally required (lenient arm only) — see check_handoff_b
+]
+
+
 @dataclass
 class GapReport:
     missing_always: list[str] = field(default_factory=list)
@@ -125,6 +150,56 @@ def check_handoff(
         cause_val = candidate.get("likely_cause", "")
         conf_val = candidate.get("confidence", "")
         if not cause_val and not conf_val:
+            report.thin_but_silent = True
+
+    return report
+
+
+def _is_empty(val: Any) -> bool:
+    if val is None:
+        return True
+    if isinstance(val, str):
+        return not val.strip()
+    if isinstance(val, (list, dict)):
+        return len(val) == 0
+    return False
+
+
+def check_handoff_b(
+    candidate: dict[str, Any],
+    expected: dict[str, Any],
+    state: dict[str, Any],
+) -> GapReport:
+    """Check a human→engineering handoff against Contract B + evidence-derived leniency.
+
+    Strict (evidence pinned the cause): likely_cause + confidence required.
+    Lenient (cause genuinely open): the cause may be 'undetermined', but the note
+    must (a) not be silent about it and (b) name the open unknowns — an honest
+    open handoff lists what engineering still has to resolve.
+    """
+    leniency = derive_leniency(state)
+    report = GapReport(leniency=leniency)
+
+    for key in ALWAYS_REQUIRED_KEYS_B:
+        if _is_empty(candidate.get(key)):
+            report.missing_always.append(key)
+
+    for key in ["support_ruled_out", "impact_urgency"]:
+        if _is_empty(candidate.get(key)):
+            report.missing_other.append(key)
+
+    cause_keys = ["likely_cause", "confidence"]
+    if leniency.mode == "strict":
+        for key in cause_keys:
+            if _is_empty(candidate.get(key)):
+                report.missing_other.append(key)
+    else:
+        cause_val = candidate.get("likely_cause", "")
+        conf_val = candidate.get("confidence", "")
+        if _is_empty(cause_val) and _is_empty(conf_val):
+            report.thin_but_silent = True
+        # An honest open escalation must name what is still open.
+        if _is_empty(candidate.get("open_unknowns")):
             report.thin_but_silent = True
 
     return report
