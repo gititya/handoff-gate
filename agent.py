@@ -7,33 +7,14 @@ produces is the artifact the gate grades.
 from __future__ import annotations
 
 import json
-import os
-import subprocess
 from typing import Any
 
 import anthropic
 
+from _api import get_api_key
+
 
 MODEL = "claude-haiku-4-5-20251001"
-
-
-def _get_api_key() -> str:
-    key = os.environ.get("ANTHROPIC_API_KEY")
-    if key:
-        return key
-    try:
-        key = subprocess.check_output(
-            ["security", "find-generic-password", "-s", "ANTHROPIC_API_KEY", "-w"],
-            text=True,
-        ).strip()
-        if key:
-            return key
-    except subprocess.CalledProcessError:
-        pass
-    raise RuntimeError(
-        "ANTHROPIC_API_KEY not found in env or macOS keychain. "
-        "Set it via: export ANTHROPIC_API_KEY=<key> or add to Keychain."
-    )
 
 
 def build_transcript_text(turns: list[dict[str, Any]]) -> str:
@@ -59,7 +40,7 @@ def work_case(fixture: dict[str, Any]) -> dict[str, Any]:
     """Have Claude work the case and produce a candidate handoff note."""
     transcript = build_transcript_text(fixture["transcript_turns"])
 
-    client = anthropic.Anthropic(api_key=_get_api_key())
+    client = anthropic.Anthropic(api_key=get_api_key())
     response = client.messages.create(
         model=MODEL,
         max_tokens=1024,

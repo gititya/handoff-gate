@@ -28,7 +28,7 @@ from engine import reconstruct
 from router import route
 from agent import work_case
 from contracts import derive_leniency
-from gate import run_gate
+from gate import run_gate, release_to_copilot
 
 OUTPUT_DIR = Path(__file__).parent / "outputs"
 
@@ -151,10 +151,12 @@ def run_demo(case_id: str, skip_judge: bool = False) -> dict[str, Any]:
     else:
         print(f"\n  ✓ PASSED — handoff released to co-pilot")
 
-    if package.released:
-        print(f"\n  → Handoff RELEASED (final version)")
-    else:
-        print(f"\n  ✗ Handoff NOT released")
+    # Exercise the actual workflow boundary — it refuses to release on fail.
+    try:
+        release_to_copilot(package)
+        print(f"\n  → Boundary cleared: handoff RELEASED to co-pilot (final version)")
+    except RuntimeError as e:
+        print(f"\n  ✗ Boundary held: {e}")
 
     elapsed = time.time() - t0
     print(f"\n  Total time: {elapsed:.1f}s")

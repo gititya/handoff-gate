@@ -7,30 +7,11 @@ note via live Claude call, then releases.
 from __future__ import annotations
 
 import json
-import os
-import subprocess
 from typing import Any
 
 import anthropic
 
-
-def _get_api_key() -> str:
-    key = os.environ.get("ANTHROPIC_API_KEY")
-    if key:
-        return key
-    try:
-        key = subprocess.check_output(
-            ["security", "find-generic-password", "-s", "ANTHROPIC_API_KEY", "-w"],
-            text=True,
-        ).strip()
-        if key:
-            return key
-    except subprocess.CalledProcessError:
-        pass
-    raise RuntimeError(
-        "ANTHROPIC_API_KEY not found in env or macOS keychain."
-    )
-
+from _api import get_api_key
 from contracts import check_handoff, GapReport
 
 MODEL = "claude-haiku-4-5-20251001"
@@ -82,7 +63,7 @@ def _generate_corrected_note(
         "Return ONLY the JSON object."
     )
 
-    client = anthropic.Anthropic(api_key=_get_api_key())
+    client = anthropic.Anthropic(api_key=get_api_key())
     response = client.messages.create(
         model=MODEL,
         max_tokens=1500,
@@ -148,13 +129,19 @@ def run_gate(
         package.release()
         return package
 
-    # BLOCKED — intercept and hold
+    # BLOCKED — intercept and hold. Release only after a verified correction.
     package.blocked = True
 
     corrected = _generate_corrected_note(
         candidate, expected, gap_report, judge_verdict, state
     )
     package.corrected = corrected
-    package.release()
+
+    # Re-check the corrected note before releasing — the hold stands until the
+    # gaps are actually filled.
+    if not corrected.get("_parse_error"):
+        recheck = check_handoff(corrected, expected, state)
+        if recheck.passed:
+            package.release()
 
     return package
