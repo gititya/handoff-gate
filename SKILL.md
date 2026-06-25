@@ -15,8 +15,22 @@ Decisions locked (carry into Phase 1):
 
 **Phase 1 carry-forward:** the gate's field-6 leniency MUST read the engine's evidence-sufficiency / final-cause-gating output (Step 1), and emit `borderline` when uncertain. Verified data facts: all 9 Contract A fields map 1:1 to `expected_handoff.ai_to_human`; the two fraud `handoff` cases carry `likely_cause="unexplained / fraud-flagged"`, `confidence="low"` (must PASS).
 
-### Phase 0.5 — Anchor case ⬜ NEXT
-Pull the existing pack (do NOT regenerate). Review one hard seed case as the demo anchor (candidate: a fraud-flagged `handoff` case, e.g. `call_3835c4f220` / `call_495b70f18b`). Confirm planted truth + `expected_handoff` are right.
+### Phase 0.5 — Anchor case ✅ DONE (2026-06-25)
+Confirmed anchor cases from the live pack (no regeneration):
+- **Hero:** `call_61772f4783` — trial-conversion / `resolved`, `root_cause_evidence_seen=True`, `final_cause` pinned → strict arm (confirms gate demands cause + confidence).
+- **Contrast:** `call_3835c4f220` — fraud-flagged, `final_cause=""`, evidence open → lenient arm + `borderline` flag (gate must NOT demand confirmed cause, must demand open-state honesty).
 
-### Phase 1 — Hero demo ⬜ NOT STARTED
-Smallest runnable slice, one case, end-to-end (~90s): LLM works case → vendored engine reconstructs → LLM writes handoff → gate grades vs Contract A → if incomplete, **intercept-and-hold** + corrected note. Output: side-by-side thin vs corrected handoff with the gap named. Vendor the engine (no edits to `real-time_support_Updated`); wire the `handoff_completeness` judge; build router + gate. Sonnet builds, Opus reviews.
+### Phase 1 — Hero demo ✅ DONE (2026-06-25)
+End-to-end hero demo built and verified. Branch `feat/phase-1-hero-demo`, PR #1 open (`gititya/handoff_agent/pull/1`). Commit `d30d845`.
+
+**Files shipped:** `engine.py` · `contracts.py` · `router.py` · `agent.py` · `grade.py` · `gate.py` · `demo.py` · `pyproject.toml`
+
+**Verified runs:**
+- `call_61772f4783 --skip-judge`: ~10s, BLOCKED (13 missing fields), corrected note generated, RELEASED ✓
+- `call_3835c4f220 --skip-judge`: ~9s, BLOCKED, lenient + BORDERLINE, corrected note uses "unexplained/fraud-flagged" + explicit `open_state_reason`, RELEASED ✓
+- `call_61772f4783` (MLX judge): ~44s, BLOCKED (judge passed, field-presence check caught it — both layers add value), corrected, RELEASED ✓
+
+**Model rule:** Sonnet built, Opus reviews (next step: `/model opus` → `/review`).
+
+### Phase 2 — Contract B + human→eng hop ⬜ NOT STARTED
+Author + lock Contract B; add its router branch. Same gate, different checklist.
