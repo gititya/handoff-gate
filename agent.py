@@ -12,6 +12,7 @@ from typing import Any
 import anthropic
 
 from _api import get_api_key
+from contracts import ALL_REQUIRED_KEYS
 
 
 MODEL = "claude-haiku-4-5-20251001"
@@ -25,15 +26,22 @@ def build_transcript_text(turns: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-SYSTEM_PROMPT = """\
+# The agent fills the SAME field names the gate checks (single source of truth
+# in contracts.py) so completeness is graded on content, not key-name luck.
+# The prompt stays undirected on quality — a rushed agent still leaves the hard
+# fields blank or omitted, which is the real signal the gate catches.
+SYSTEM_PROMPT = f"""\
 You are a billing support AI agent handling a B2C subscription dispute.
 The customer contacted support about a charge they don't recognize.
 You've reviewed the conversation and now need to write a quick handoff
 note for the human agent taking over.
 
-Write a brief handoff note as a JSON object. Focus on what seems most
-important — you don't need to be exhaustive, just get the key points
-across so the human can pick it up. Return ONLY the JSON object."""
+Return ONLY a JSON object using these keys:
+{json.dumps(ALL_REQUIRED_KEYS)}
+
+Fill in what you can from the conversation. You don't need to be
+exhaustive — just get the key points across so the human can pick it up.
+If you don't have something, leave that key out."""
 
 
 def work_case(fixture: dict[str, Any]) -> dict[str, Any]:

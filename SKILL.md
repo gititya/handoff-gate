@@ -32,5 +32,10 @@ End-to-end hero demo built and verified. Branch `feat/phase-1-hero-demo`, PR #1 
 
 **Model rule:** Sonnet built, Opus reviews (next step: `/model opus` → `/review`).
 
-### Phase 2 — Contract B + human→eng hop ⬜ NOT STARTED
-Author + lock Contract B; add its router branch. Same gate, different checklist.
+### Phase 2 — Contract B + human→eng hop ⬜ DEFERRED (blocked on data)
+**Contract B is a B2C PRODUCT-BUG handoff, not billing** (Contracts.md 69–86). No B2C product-bug data exists: the generator pack is B2C-billing-only, and the `real-time_support_Updated` fixtures are **B2B** (webhook/API/workspace) — explicitly off-limits per CLAUDE.md. Two earlier wrong turns (reading the generator's billing-escalation block as Contract B; then sourcing B2B fixtures) were rejected. Contract B waits until B2C product-bug cases + a `human_to_engineering` answer key are generated upstream. See memory `contract-b-answer-key-debt`.
+
+### Phase 3 — Weekly roll-up ✅ DONE (2026-06-25)
+`rollup.py` batches the gate over the 10 B2C cases (Contract A). Branch `feat/phase-3-rollup`. Reports pass rate + top recurring gap + borderline count; saves `outputs/rollup_*.json`.
+- **Grading fix (load-bearing):** the agent now fills the SAME field names the gate checks — `agent.py` imports `ALL_REQUIRED_KEYS` from `contracts.py` (single source of truth) so completeness is graded on content, not key-name luck. Before the fix the roll-up was noise (0/10, 11–13 phantom gaps from key-name mismatch). After: tight, real signal.
+- **Real finding:** recurring gap = `account_id` (10/10) + `subscription_id` (9/10) — internal system IDs that live in the account record, not the customer transcript the AI sees. AI writes readable prose handoffs but drops the structured identifiers; the gate catches it and fills from the reconstruction. This also makes Phase 1's named gaps trustworthy (hero case now blocks on the 2 real IDs, not 13 phantom fields).
