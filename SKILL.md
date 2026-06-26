@@ -97,3 +97,15 @@ Verification: direct invocation of all `tests/test_contracts.py` test functions 
 Live hostile run: `.venv/bin/python b2b_rollup.py --profile hostile` produced `outputs/b2b_rollup_20260626_160547.json`, `0/3` pass, `3/3` blocked. The intended support failures surfaced: missing evidence handles, unsupported ruled-out branches, unsupported open branches, and wrong likely cause (`likely_cause_not_supported`). This addresses the Opus critique that the earlier `11/11` live Flow 2 run was overfed by the harness.
 
 Verification: direct invocation of all `tests/test_contracts.py` test functions passed after adding hostile profile tests.
+
+---
+
+## 2026-06-26 · Closeout — honest defaults (PR #5, #6 merged to main)
+
+Build is **done**. Two PRs merged to `main`:
+- **PR #5** (`codex/harden-support-realism`): evidence grounding (`evidence_gaps`), `trusted_sources` correction, override lane (`override_required`), 8 ugly B2B anchors + hostile harness, README.
+- **PR #6** (`chore/honesty-defaults`): `run_gate` defaults to `trusted_sources` (fills only system-of-record facts, **never invents a diagnosis**; oracle/answer-key is explicit eval-lab only); `b2b_rollup.py` defaults to `audit` (clean + hostile in one headline).
+
+Final state: 26 unit tests pass on `main`. Live audit = `11/14` (11 clean warm + 3 hostile blocked). Flow 1 still releases (identity filled from records). Honesty bar written in README ("What done/honest means here").
+
+Known, accepted limitations (disclosed, not hidden): grounding + hostile harness are **Contract B only** — Flow 1/Contract A is presence-only; `gate_analytics.jsonl` is logged but not yet aggregated (extractor build-trigger is manual for now). Both are deferrable, not blockers. The word-match grounding stays a labeled stopgap (smartening it = the deferred LLM-extractor).

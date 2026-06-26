@@ -110,3 +110,20 @@ things_to_know:
 updated_at: "2026-06-26"
 updated_by: "codex"
 ```
+
+---
+
+## 2026-06-26 — Closeout (honest defaults)
+
+```yaml
+status: "done"
+current_state: "Handoff Quality Gate complete on main. Contract A (AI->human) + Contract B (human->engineering) with evidence-derived leniency, deterministic mechanical gate as sole hard blocker, LLMs only at edges. PR #5 (realism hardening) and PR #6 (honest defaults) merged."
+next_action: "None required. Optional, deferred: extend grounding to Contract A; aggregate gate_analytics.jsonl to drive the extractor build-trigger. Future features are parked in vault feature-expansion.md."
+things_to_know:
+  - "Correction defaults to trusted_sources: fills system-of-record facts only, never invents a diagnosis. Oracle (answer-key) is explicit eval-lab only."
+  - "b2b_rollup.py defaults to the audit profile (clean + hostile). Latest live audit: 11/14 (11 clean warm + 3 hostile blocked) — headline is intentionally not 100%."
+  - "26 unit tests pass on main. Grounding + hostile harness are Contract B only (Flow 1 is presence-only) — disclosed in README."
+  - "Word-match grounding is a labeled stopgap; the LLM-extractor remains deferred and data-gated."
+updated_at: "2026-06-26"
+updated_by: "claude"
+```
