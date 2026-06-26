@@ -108,6 +108,11 @@ class GapReport:
     missing_other: list[str] = field(default_factory=list)
     thin_but_silent: bool = False
     leniency: LeniencyRule = field(default_factory=lambda: LeniencyRule(mode="strict"))
+    # Soft signal — does NOT affect `passed`. Set when the substance is present
+    # but in a less-structured place than preferred (e.g. open branches named in
+    # prose rather than the dedicated open_unknowns list). Routes to human review.
+    structure_warning: bool = False
+    structure_warning_reason: str = ""
 
     @property
     def passed(self) -> bool:
@@ -165,6 +170,26 @@ def _is_empty(val: Any) -> bool:
     return False
 
 
+# STOPGAP — deterministic prose check until the LLM-extractor seam lands
+# (see handoff-engine/docs/llm-extractor-deferral.md). When an honest open
+# escalation names its remaining branches inside `likely_cause` instead of the
+# dedicated `open_unknowns` list, we want to ACCEPT it (the substance is there)
+# but flag it for structure. This token scan is the cheap deterministic stand-in
+# for "did the agent state what's still open?" — the extractor replaces it once
+# the analytics show prose-only passes are frequent enough to justify the build.
+_OPEN_STATE_MARKERS = (
+    "undetermined", "unresolved", "unknown", "not determined",
+    "open", "either", " vs ", "pending", "tbd",
+)
+
+
+def _names_open_state_in_prose(likely_cause: Any) -> bool:
+    if not isinstance(likely_cause, str) or not likely_cause.strip():
+        return False
+    low = likely_cause.lower()
+    return any(marker in low for marker in _OPEN_STATE_MARKERS)
+
+
 def check_handoff_b(
     candidate: dict[str, Any],
     expected: dict[str, Any],
@@ -194,12 +219,26 @@ def check_handoff_b(
             if _is_empty(candidate.get(key)):
                 report.missing_other.append(key)
     else:
+        # Lenient arm — cause is genuinely open. An honest WARM escalation must
+        # still name what is still open; a COLD one (no work, says nothing about
+        # the open state) is what we block. Middle path: accept the open branches
+        # whether they're in the dedicated `open_unknowns` list OR named in the
+        # `likely_cause` prose — but soft-flag prose-only for structure.
         cause_val = candidate.get("likely_cause", "")
         conf_val = candidate.get("confidence", "")
         if _is_empty(cause_val) and _is_empty(conf_val):
-            report.thin_but_silent = True
-        # An honest open escalation must name what is still open.
-        if _is_empty(candidate.get("open_unknowns")):
+            report.thin_but_silent = True  # silent → block
+        elif not _is_empty(candidate.get("open_unknowns")):
+            pass  # clean warm escalation — open branches in the dedicated list
+        elif _names_open_state_in_prose(cause_val):
+            # Substance is there, structure isn't — pass, but route to human review.
+            report.structure_warning = True
+            report.structure_warning_reason = (
+                "Open branches named in likely_cause prose, not the dedicated "
+                "open_unknowns list — accepted; structure them as a list."
+            )
+        else:
+            # Cold: no open_unknowns and prose doesn't state what's still open.
             report.thin_but_silent = True
 
     return report

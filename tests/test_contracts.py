@@ -100,6 +100,32 @@ def test_lenient_silent_about_open_state_blocks():
     assert rep.thin_but_silent is True
 
 
+def test_lenient_open_state_in_prose_passes_with_warning():
+    """Middle path: open branches named in likely_cause prose (no open_unknowns
+    list) is an honest WARM escalation — it passes, but carries a structure
+    warning. This is the exact false-block the adversarial review flagged."""
+    state = reconstruct_fixture(_fixture(with_cause=False))
+    h = _complete_handoff(open_state=True)
+    h.pop("open_unknowns")
+    h["likely_cause"] = "Undetermined — stale_entitlement_cache vs upstream_service_incident both remain open"
+    rep = check_handoff_b(h, h, state)
+    assert rep.passed is True
+    assert rep.structure_warning is True
+    assert rep.thin_but_silent is False
+
+
+def test_lenient_cold_no_open_named_blocks():
+    """Cold escalation: no open_unknowns AND likely_cause names a definite cause
+    with no open-state markers — the open state is not stated anywhere, so block."""
+    state = reconstruct_fixture(_fixture(with_cause=False))
+    h = _complete_handoff(open_state=True)
+    h.pop("open_unknowns")
+    h["likely_cause"] = "provisioning_state_mismatch"
+    rep = check_handoff_b(h, h, state)
+    assert rep.passed is False
+    assert rep.thin_but_silent is True
+
+
 def test_missing_always_required_blocks():
     state = reconstruct_fixture(_fixture(with_cause=True))
     h = _complete_handoff(open_state=False)

@@ -153,6 +153,12 @@ def run_gate(
             or "judge disagreed with completeness"
         )
 
+    # Contract soft-flag (e.g. open branches named in prose, not the dedicated
+    # list). Releases, but routes to a human — never blocks.
+    if gap_report.structure_warning and not package.human_review_flag:
+        package.human_review_flag = True
+        package.human_review_reason = gap_report.structure_warning_reason
+
     if gap_report.passed:
         # Mechanically complete → release (flagged for human review if the judge dissented).
         package.release()
