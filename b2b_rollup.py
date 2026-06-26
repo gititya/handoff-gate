@@ -37,6 +37,7 @@ DISTRACTOR_CAUSES = {
     "level3_misrouted_ratelimit_actually_webhook_auth": "quota_exhaustion",
 }
 SUPPORTED_PROFILES = {
+    "audit",
     "clean",
     "evidence_starved",
     "distractor_wrong_cause",
@@ -280,6 +281,13 @@ def grade_anchor(
 def case_profile_pairs(case_ids: list[str] | None, profile: str) -> list[tuple[str, str]]:
     if profile not in SUPPORTED_PROFILES:
         raise ValueError(f"Unsupported profile: {profile}")
+    if profile == "audit":
+        # The honest headline run: every anchor on a clean transcript PLUS the
+        # hostile set where the agent can actually fabricate. Reported together
+        # so the pass rate is never the spoon-fed number alone.
+        if case_ids:
+            raise ValueError("--profile audit runs the full clean + hostile set; omit --case")
+        return [(cid, "clean") for cid in all_anchor_ids()] + PROFILE_CASES["hostile"]
     if profile == "hostile":
         if case_ids:
             raise ValueError("--profile hostile uses its fixed 3-case set; omit --case")
@@ -288,7 +296,7 @@ def case_profile_pairs(case_ids: list[str] | None, profile: str) -> list[tuple[s
     return [(case_id, profile) for case_id in ids]
 
 
-def run_b2b_rollup(case_ids: list[str] | None, profile: str = "clean") -> dict[str, Any]:
+def run_b2b_rollup(case_ids: list[str] | None, profile: str = "audit") -> dict[str, Any]:
     t0 = time.time()
     rows: list[dict[str, Any]] = []
     pairs = case_profile_pairs(case_ids, profile)
@@ -322,7 +330,8 @@ def run_b2b_rollup(case_ids: list[str] | None, profile: str = "clean") -> dict[s
             result = "review structure"
         else:
             result = f"blocked · {len(row['missing_fields'])} gaps"
-        print(f"  {row['case_id']:<48}{row['leniency']:<10}{result}")
+        label = row["case_id"] if row["profile"] == "clean" else f"{row['case_id']} [{row['profile']}]"
+        print(f"  {label[:46]:<48}{row['leniency']:<10}{result}")
 
     print(f"\n  Warm handoffs:    {outcome_counts.get('pass_clean', 0)}/{total}")
     print(f"  Human review:     {outcome_counts.get('pass_prose_flagged', 0)}/{total}")
@@ -361,8 +370,8 @@ def main() -> None:
     parser.add_argument(
         "--profile",
         choices=sorted(SUPPORTED_PROFILES),
-        default="clean",
-        help="agent-facing transcript/state profile (default: clean)",
+        default="audit",
+        help="agent-facing transcript/state profile (default: audit = clean + hostile)",
     )
     args = parser.parse_args()
     run_b2b_rollup(args.cases, profile=args.profile)

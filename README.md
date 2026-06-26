@@ -27,7 +27,7 @@ Prose-only open branches **pass** but carry a `structure_warning` → routed to 
 
 ## When the gate blocks
 
-- **Correct it** — `trusted_sources` mode fills missing fields from the system of record and **refuses to invent** what isn't there. (`oracle` mode reads the sealed answer key — eval-lab only, never a production claim.)
+- **Correct it (default)** — `trusted_sources` fills only the missing **system-of-record facts** (account/identity/charge) from the records and **refuses to invent** anything else. It **never fabricates a diagnosis**: if `likely_cause`, evidence, or open branches are missing, the handoff stays held. (`oracle` mode reads the sealed answer key — **eval-lab only**, must be requested explicitly, never the default.)
 - **Override it** — a blocked note can be released with a *recorded reason* (`sla_risk`, `vip_customer`, `active_incident`, …), logged as `override_required`. An override is **not a pass** — it records why the risk moved. This is the real-support escape hatch: sometimes you must escalate before root cause.
 
 ## Run it
@@ -36,15 +36,28 @@ Prose-only open branches **pass** but carry a `structure_warning` → routed to 
 # Unit tests — the deterministic proof of every rule
 python3 -m pytest tests/ -q
 
-# Flow 2 live roll-up over the B2B anchors (clean transcripts)
+# Flow 2 live roll-up. Default = audit: every anchor on a clean transcript
+# PLUS the hostile set, reported as ONE honest number.
 python3 b2b_rollup.py
 
-# Adversarial run — agent gets a hostile transcript (evidence withheld,
-# wrong-cause distractor, or a cold dump). The gate should block these.
+# Just the adversarial set (agent gets evidence withheld / wrong-cause
+# distractor / cold dump). The gate should block all three.
 python3 b2b_rollup.py --profile hostile
 ```
 
-A clean run is *not* expected to be 100% — the grounding guard blocks live notes that drift from the evidence. The hostile run should block all three. That's the honest signal.
+The headline is **not** 100% by design — the hostile cases block, and the grounding guard blocks live notes that drift from the evidence. A 100% pass rate here would mean the gate isn't doing its job.
+
+## What "done / honest" means here
+
+There are no real customers or call data, so success is **not** "is it real" — it's "can a skeptical reviewer find a place where a number is inflated or a value is faked?" The bar is a fixed set of invariants:
+
+- Grading reads evidence, never a difficulty/resolution metadata label.
+- Correction fills system-of-record facts only — it never invents a diagnosis.
+- The headline number comes from a run where the agent **can** fail (audit/hostile), not a spoon-fed one.
+- Every block is logged (`gate_analytics.jsonl`) so the grounding heuristic's false-block rate is *measured*, not assumed.
+- Fixtures are labeled fixtures; a block is a real intercept-and-hold, not a score.
+
+The grounding check is deterministic word-overlap — a labeled **stopgap**. Making it semantically smart is the deferred LLM-extractor; it is intentionally *not* built, and the analytics decide when it should be.
 
 ## Layout
 

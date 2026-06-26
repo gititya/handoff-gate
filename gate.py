@@ -113,31 +113,51 @@ def _generate_corrected_note(
 
 
 
-def _trusted_source_values(state: dict[str, Any]) -> dict[str, Any]:
+# A blocked note may only be auto-completed from the SYSTEM OF RECORD — the
+# mechanical identity/billing facts a CRM/billing lookup legitimately returns.
+# Judgment fields (likely_cause, confidence, evidence, ruled-out, open branches)
+# are the human's work product: the gate NEVER invents them. If they're missing,
+# the handoff stays held. This is the honesty line — correction fills facts, not
+# diagnoses.
+SYSTEM_OF_RECORD_FIELDS = {
+    "account_id",
+    "subscription_id",
+    "customer_account_identity",
+    "charge",
+    "customer_claim",
+}
+
+
+def _records_view(state: dict[str, Any], expected: dict[str, Any]) -> dict[str, Any]:
     fixture = state.get("_fixture", {})
     sources = fixture.get("trusted_sources", {})
     if "ai_to_human" in sources:
-        return dict(sources["ai_to_human"])
-    if "contract_a" in sources:
-        return dict(sources["contract_a"])
-    if "system_records" in fixture:
-        return dict(fixture["system_records"])
-    return {}
+        base = dict(sources["ai_to_human"])
+    elif "contract_a" in sources:
+        base = dict(sources["contract_a"])
+    elif "system_records" in fixture:
+        base = dict(fixture["system_records"])
+    else:
+        # Lab stand-in for a CRM/billing lookup: the mechanical fields only.
+        base = dict(expected or {})
+    return {k: v for k, v in base.items() if k in SYSTEM_OF_RECORD_FIELDS}
 
 
 def _generate_trusted_source_correction(
     candidate: dict[str, Any],
     gap_report: GapReport,
     state: dict[str, Any],
+    expected: dict[str, Any],
 ) -> tuple[dict[str, Any], list[str]]:
     corrected = dict(candidate)
-    trusted = _trusted_source_values(state)
+    records = _records_view(state, expected)
     unfillable: list[str] = []
 
     for field in gap_report.missing_fields:
-        if field in trusted and trusted[field] not in (None, "", [], {}):
-            corrected[field] = trusted[field]
+        if field in records and records[field] not in (None, "", [], {}):
+            corrected[field] = records[field]
         else:
+            # Judgment field, or the system of record simply lacks it → hold.
             unfillable.append(field)
 
     return corrected, unfillable
@@ -191,7 +211,7 @@ def run_gate(
     state: dict[str, Any],
     judge_verdict: dict[str, Any] | None,
     check_fn=check_handoff,
-    correction_mode: str = "oracle",
+    correction_mode: str = "trusted_sources",
     override_reason: str = "",
 ) -> HandoffPackage:
     """Run the gate: check, block if needed, correct, release.
@@ -243,10 +263,12 @@ def run_gate(
         return package
 
     if correction_mode == "trusted_sources":
-        corrected, unfillable = _generate_trusted_source_correction(candidate, gap_report, state)
+        corrected, unfillable = _generate_trusted_source_correction(candidate, gap_report, state, expected)
         package.corrected = corrected
         package.unfillable_missing_fields = unfillable
     elif correction_mode == "oracle":
+        # Reads the sealed answer key — EVAL-LAB ONLY, never a production claim.
+        # Must be requested explicitly; it is not the default.
         corrected = _generate_corrected_note(
             candidate, expected, gap_report, judge_verdict, state
         )
