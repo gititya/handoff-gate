@@ -39,3 +39,22 @@ End-to-end hero demo built and verified. Branch `feat/phase-1-hero-demo`, PR #1 
 `rollup.py` batches the gate over the 10 B2C cases (Contract A). Branch `feat/phase-3-rollup`. Reports pass rate + top recurring gap + borderline count; saves `outputs/rollup_*.json`.
 - **Grading fix (load-bearing):** the agent now fills the SAME field names the gate checks — `agent.py` imports `ALL_REQUIRED_KEYS` from `contracts.py` (single source of truth) so completeness is graded on content, not key-name luck. Before the fix the roll-up was noise (0/10, 11–13 phantom gaps from key-name mismatch). After: tight, real signal.
 - **Real finding:** recurring gap = `account_id` (10/10) + `subscription_id` (9/10) — internal system IDs that live in the account record, not the customer transcript the AI sees. AI writes readable prose handoffs but drops the structured identifiers; the gate catches it and fills from the reconstruction. This also makes Phase 1's named gaps trustworthy (hero case now blocks on the 2 real IDs, not 13 phantom fields).
+
+---
+
+## SUPERSEDED — 2026-06-26 · Integration stance (Contract B is now B2B)
+
+> Append-only update. The Phase 2 entry above (and the "B2B off-limits" line) is **history, not current instruction.** This note governs.
+
+The portfolio decision changed from **isolation** ("engine reuse only, don't touch realtime's B2B fixtures") to **integration** (make the repos work together as one pipeline via a thin runner). Under that stance:
+
+- **Contract B is now a B2B product-bug human→engineering handoff** (not B2C). The realtime B2B fixtures are **in-bounds** — they are the natural Flow-2 source because the copilot only reconstructs that domain. The old "off-limits per CLAUDE.md" guard was an isolation-era artifact and is retired (see the CLAUDE.md SUPERSEDED note).
+- **The copilot (`real-time_support_Updated/run.py::run_fixture`) is the live Flow-2 reconstruction engine** — called by the runner, not re-implemented here.
+- **Built this session (Phase 1 of the integration plan):**
+  - Decoupled `engine.py` — removed the hard reach into the generator's export dir; added `reconstruct_fixture(fixture)` + `HANDOFF_FIXTURE_BASE` override so the gate is *handed* fixtures.
+  - `contracts.py` — locked **Contract B** (`ALWAYS_REQUIRED_KEYS_B`, `check_handoff_b`); reuses `derive_leniency` (strict when evidence pinned the cause, lenient-but-must-name-open-unknowns otherwise).
+  - `contract_b_anchors/` — 3 hand-authored gold keys (derived from each fixture's evidence): 2 lenient (conflicting-systems, workspace handoff) + 1 strict (webhook-auth). Verified pass; thin/silent + missing-cause notes verified blocked.
+  - `gate.py` — judge is now **soft evidence + human-review flag, not a hard blocker**; mechanical contract check is the sole release gate (keeps local-MLX availability out of the release path). `run_gate(check_fn=...)` accepts Contract B. Corrected-note generation labeled **oracle-assisted**.
+- **Still pending:** the runner (Phase 2 of the plan — `customer-support-ai-os`), the generator's B2B product-bug scenario (Phase 3, scales the anchor set). Plan: `~/.claude/plans/breezy-petting-thimble.md`.
+
+- **2026-06-26 · Contract B lenient arm — middle path + LLM-extractor deferred.** Adversarial review (GPT-5.5) found the lenient arm false-blocked honest *warm* escalations when open branches were named in `likely_cause` prose but `open_unknowns` was empty (grading format, not substance). `check_handoff_b` now accepts open branches from **either** `open_unknowns` **or** prose (`_names_open_state_in_prose`, a deterministic stopgap), and **soft-flags** prose-only via `GapReport.structure_warning` (routes to human, never blocks); cold escalations still block. The LLM-extractor seam that would replace the stopgap is **deferred and data-gated** — build it only when prose-only passes accumulate (analytics in `customer-support-ai-os/outputs/gate_analytics.jsonl`). Rationale + build trigger: `docs/llm-extractor-deferral.md`.

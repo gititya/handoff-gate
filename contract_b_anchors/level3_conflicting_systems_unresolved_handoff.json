@@ -1,0 +1,32 @@
+{
+  "schema_version": "contract_b_anchor.v1",
+  "case_id": "level3_conflicting_systems_unresolved_handoff",
+  "source_fixture": "real-time_support_Updated/fixtures/level3_conflicting_systems_unresolved_handoff.json",
+  "leniency_arm": "lenient",
+  "derivation_note": "Hand-derived from the fixture's context_events (facts/ruled_out_branches/candidate_branches/next_check) + handoff_summary. The cause is genuinely open in the source case (final_cause=''), so this engineering handoff must be explicit about the open state, not name a cause.",
+  "expected_handoff": {
+    "human_to_engineering": {
+      "customer_account_identity": "Enterprise workspace; renewal active and billing-verified",
+      "affected_scope": "All users in the workspace see the entitlement block",
+      "system_discrepancy": "Billing reports entitlement active and payment clear, but provisioning reports the workspace not ready. Billing and provisioning disagree on entitlement state.",
+      "evidence_handles": [
+        "billing:entitled",
+        "payment:clear",
+        "provisioning:not_ready",
+        "renewal receipt + admin page both show renewal active"
+      ],
+      "support_ruled_out": [
+        "payment_failure",
+        "billing_entitlement_gap"
+      ],
+      "likely_cause": "Undetermined — provisioning_state_mismatch vs entitlement_cache_delay both still open; evidence has not pinned the mechanism.",
+      "confidence": "low (open)",
+      "open_unknowns": [
+        "provisioning_job_status",
+        "entitlement_cache_status"
+      ],
+      "impact_urgency": "High — enterprise customer needs an update for their implementation owner today",
+      "specific_ask": "Inspect the provisioning job status and entitlement cache for this workspace and determine why provisioning has not caught up to the active billing entitlement."
+    }
+  }
+}

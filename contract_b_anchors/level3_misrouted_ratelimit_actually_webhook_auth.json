@@ -1,0 +1,27 @@
+{
+  "schema_version": "contract_b_anchor.v1",
+  "case_id": "level3_misrouted_ratelimit_actually_webhook_auth",
+  "source_fixture": "real-time_support_Updated/fixtures/level3_misrouted_ratelimit_actually_webhook_auth.json",
+  "leniency_arm": "strict",
+  "derivation_note": "Hand-derived from the fixture's context_events. Evidence pinned the cause (final_cause='webhook_auth_rotation', evidence_seen=True), so this engineering handoff is held to the strict arm: it must name the cause with the evidence that supports it.",
+  "expected_handoff": {
+    "human_to_engineering": {
+      "customer_account_identity": "Customer on an upgraded plan after scaling",
+      "affected_scope": "A subset of webhook deliveries failing for the affected service (not account-wide)",
+      "system_discrepancy": "Customer reported rate-limiting after scaling, but quota is under limit. Failures are isolated to a subset of webhook callbacks; the initial plan-upgrade context was noise.",
+      "evidence_handles": [
+        "quota:under_limit",
+        "webhook_signing_secret:rotated",
+        "webhook_auth:legacy_secret"
+      ],
+      "support_ruled_out": [
+        "quota_exhaustion"
+      ],
+      "likely_cause": "webhook_auth_rotation — the webhook signing secret was rotated and the legacy worker is still presenting the old secret, so authenticated webhook callbacks fail.",
+      "confidence": "high",
+      "open_unknowns": [],
+      "impact_urgency": "Standard — isolated to a subset of webhook deliveries",
+      "specific_ask": "Update the legacy worker's signing secret to the rotated secret and replay one failed webhook callback to confirm the fix."
+    }
+  }
+}
