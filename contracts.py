@@ -179,7 +179,7 @@ def _is_empty(val: Any) -> bool:
 # the analytics show prose-only passes are frequent enough to justify the build.
 _OPEN_STATE_MARKERS = (
     "undetermined", "unresolved", "unknown", "not determined",
-    "open", "either", " vs ", "pending", "tbd",
+    "open", "either", " vs ", " or ", "pending", "tbd",
 )
 
 

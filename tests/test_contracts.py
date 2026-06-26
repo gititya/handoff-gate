@@ -114,6 +114,19 @@ def test_lenient_open_state_in_prose_passes_with_warning():
     assert rep.thin_but_silent is False
 
 
+def test_lenient_open_state_as_A_or_B_prose_passes_with_warning():
+    """'stale_cache or upstream_incident' is how the live agent actually phrases
+    open branches — the most natural enumeration. Must pass with a warning, not
+    block. (Regression: the ' or ' marker was missing and false-blocked it.)"""
+    state = reconstruct_fixture(_fixture(with_cause=False))
+    h = _complete_handoff(open_state=True)
+    h.pop("open_unknowns")
+    h["likely_cause"] = "stale_entitlement_cache or upstream_service_incident"
+    rep = check_handoff_b(h, h, state)
+    assert rep.passed is True
+    assert rep.structure_warning is True
+
+
 def test_lenient_cold_no_open_named_blocks():
     """Cold escalation: no open_unknowns AND likely_cause names a definite cause
     with no open-state markers — the open state is not stated anywhere, so block."""
