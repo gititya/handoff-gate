@@ -1,0 +1,28 @@
+{
+  "schema_version": "contract_b_anchor.v1",
+  "case_id": "level2_wrong_first_diagnosis_recovered",
+  "source_fixture": "hand-authored realism anchor",
+  "leniency_arm": "strict",
+  "support_reality": "wrong_first_diagnosis",
+  "derivation_note": "Hand-authored ugly support anchor for realism hardening; deterministic review fixture, not generated stock data.",
+  "expected_handoff": {
+    "human_to_engineering": {
+      "customer_account_identity": "B2B workspace account with support-verified admin contact",
+      "affected_scope": "Customer-reported affected workflow; scope must be confirmed from evidence.",
+      "system_discrepancy": "Support-visible symptoms and backend/system evidence do not fully line up yet.",
+      "evidence_handles": [
+        "role:admin confirmed",
+        "feature_flag:new_dashboard disabled"
+      ],
+      "support_ruled_out": [
+        "missing_admin_role",
+        "browser_cache"
+      ],
+      "likely_cause": "feature_flag_mismatch \u2014 support first suspected permissions, but the admin has access and the workspace flag is disabled.",
+      "confidence": "high",
+      "open_unknowns": [],
+      "impact_urgency": "Medium \u2014 admin blocked from using the new dashboard",
+      "specific_ask": "Enable or reconcile the new_dashboard flag for the workspace and confirm dashboard access."
+    }
+  }
+}

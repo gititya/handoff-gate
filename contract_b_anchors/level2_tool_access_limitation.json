@@ -1,0 +1,31 @@
+{
+  "schema_version": "contract_b_anchor.v1",
+  "case_id": "level2_tool_access_limitation",
+  "source_fixture": "hand-authored realism anchor",
+  "leniency_arm": "lenient",
+  "support_reality": "missing_tool_access",
+  "derivation_note": "Hand-authored ugly support anchor for realism hardening; deterministic review fixture, not generated stock data.",
+  "expected_handoff": {
+    "human_to_engineering": {
+      "customer_account_identity": "B2B workspace account with support-verified admin contact",
+      "affected_scope": "Customer-reported affected workflow; scope must be confirmed from evidence.",
+      "system_discrepancy": "Support-visible symptoms and backend/system evidence do not fully line up yet.",
+      "evidence_handles": [
+        "UI shows import stuck at 87%",
+        "support tool cannot read queue state"
+      ],
+      "support_ruled_out": [
+        "file_format_error",
+        "user_cancelled_import"
+      ],
+      "likely_cause": "Undetermined \u2014 support lacks queue inspector access; delayed_job vs dropped_event remain open.",
+      "confidence": "low (open)",
+      "open_unknowns": [
+        "delayed_job",
+        "dropped_event"
+      ],
+      "impact_urgency": "Medium \u2014 import blocked for finance close workflow",
+      "specific_ask": "Use engineering queue tools to inspect the import job and determine whether it is delayed or dropped."
+    }
+  }
+}

@@ -27,8 +27,25 @@ from engine import reconstruct, FIXTURE_BASE
 from router import route
 from agent import work_case
 from contracts import check_handoff
+from gate import support_outcome
 
 OUTPUT_DIR = Path(__file__).parent / "outputs"
+
+GAP_LABELS = {
+    "account_id": "missing account ID",
+    "subscription_id": "missing subscription ID",
+    "impact_urgency": "no customer impact or urgency",
+    "risk_urgency": "no customer impact or urgency",
+    "evidence_handles": "no evidence handles",
+    "evidence_handles_not_supported": "evidence handles not supported by case",
+    "open_unknowns_not_supported": "open branches not supported by case",
+    "support_ruled_out_not_supported": "ruled-out branches not supported by case",
+    "likely_cause_not_supported": "likely cause not supported by case",
+}
+
+
+def support_gap_label(field: str) -> str:
+    return GAP_LABELS.get(field, field.replace("_", " "))
 
 
 def all_case_ids() -> list[str]:
@@ -52,6 +69,12 @@ def grade_case(case_id: str, with_judge: bool) -> dict[str, Any]:
         if verdict is not None:
             judge_pass = verdict.get("pass")
 
+    outcome = support_outcome(
+        released=report.passed,
+        human_review_flag=report.structure_warning,
+        blocked=not report.passed,
+    )
+
     return {
         "case_id": case_id,
         "resolution_type": fixture.get("resolution_type", ""),
@@ -59,8 +82,10 @@ def grade_case(case_id: str, with_judge: bool) -> dict[str, Any]:
         "leniency": report.leniency.mode,
         "borderline": report.leniency.borderline,
         "passed": report.passed,
+        "outcome": outcome,
         "thin_but_silent": report.thin_but_silent,
         "missing_fields": report.missing_fields,
+        "support_gaps": [support_gap_label(f) for f in report.missing_fields],
         "judge_pass": judge_pass,
     }
 
@@ -79,7 +104,8 @@ def run_rollup(case_ids: list[str], with_judge: bool) -> dict[str, Any]:
 
     passed = sum(1 for r in rows if r["passed"])
     total = len(rows)
-    gap_counts = Counter(f for r in rows for f in r["missing_fields"])
+    gap_counts = Counter(f for r in rows for f in r["support_gaps"])
+    outcome_counts = Counter(r["outcome"] for r in rows)
     top_gap = gap_counts.most_common(1)[0] if gap_counts else (None, 0)
     borderline = sum(1 for r in rows if r["borderline"])
 
@@ -92,14 +118,25 @@ def run_rollup(case_ids: list[str], with_judge: bool) -> dict[str, Any]:
     print(f"\n  {'case':<18}{'resolution':<14}{'leniency':<12}{'result'}")
     print(f"  {'-'*16:<18}{'-'*12:<14}{'-'*10:<12}{'-'*20}")
     for r in rows:
-        result = "PASS" if r["passed"] else f"BLOCK · {len(r['missing_fields'])} gaps"
+        if r["outcome"] == "pass_clean":
+            result = "clean handoff"
+        elif r["outcome"] == "pass_prose_flagged":
+            result = "needs human review"
+        elif r["outcome"] == "override_required":
+            result = "override required"
+        else:
+            result = f"blocked · {len(r['missing_fields'])} gaps"
         bl = " [borderline]" if r["borderline"] else ""
         print(f"  {r['case_id']:<18}{r['resolution_type']:<14}{r['leniency']:<12}{result}{bl}")
 
-    print(f"\n  Pass rate:        {passed}/{total} ({100*passed//total if total else 0}%)")
+    print(f"\n  Clean handoffs:   {outcome_counts.get('pass_clean', 0)}/{total}")
+    print(f"  Human review:     {outcome_counts.get('pass_prose_flagged', 0)}/{total}")
+    print(f"  Blocked:          {outcome_counts.get('blocked', 0)}/{total}")
+    print(f"  Override needed:  {outcome_counts.get('override_required', 0)}/{total}")
+    print(f"  Pass rate:        {passed}/{total} ({100*passed//total if total else 0}%)")
     print(f"  Borderline:       {borderline}/{total} (lenient + flagged for human review)")
     if top_gap[0]:
-        print(f"  Top recurring gap: '{top_gap[0]}' — missing in {top_gap[1]}/{total} handoffs")
+        print(f"  Top recurring gap: '{top_gap[0]}' — seen in {top_gap[1]}/{total} handoffs")
     if len(gap_counts) > 1:
         runners = ", ".join(f"{f} ({n})" for f, n in gap_counts.most_common()[1:4])
         print(f"  Other gaps:        {runners}")
@@ -112,6 +149,7 @@ def run_rollup(case_ids: list[str], with_judge: bool) -> dict[str, Any]:
         "pass_rate": round(passed / total, 3) if total else 0,
         "passed": passed,
         "borderline": borderline,
+        "outcome_counts": dict(outcome_counts),
         "top_recurring_gap": {"field": top_gap[0], "count": top_gap[1]},
         "gap_counts": dict(gap_counts),
         "rows": rows,

@@ -58,3 +58,42 @@ The portfolio decision changed from **isolation** ("engine reuse only, don't tou
 - **Still pending:** the runner (Phase 2 of the plan — `customer-support-ai-os`), the generator's B2B product-bug scenario (Phase 3, scales the anchor set). Plan: `~/.claude/plans/breezy-petting-thimble.md`.
 
 - **2026-06-26 · Contract B lenient arm — middle path + LLM-extractor deferred.** Adversarial review (GPT-5.5) found the lenient arm false-blocked honest *warm* escalations when open branches were named in `likely_cause` prose but `open_unknowns` was empty (grading format, not substance). `check_handoff_b` now accepts open branches from **either** `open_unknowns` **or** prose (`_names_open_state_in_prose`, a deterministic stopgap), and **soft-flags** prose-only via `GapReport.structure_warning` (routes to human, never blocks); cold escalations still block. The LLM-extractor seam that would replace the stopgap is **deferred and data-gated** — build it only when prose-only passes accumulate (analytics in `customer-support-ai-os/outputs/gate_analytics.jsonl`). Rationale + build trigger: `docs/llm-extractor-deferral.md`.
+
+---
+
+## 2026-06-26 · Realism hardening pass — Codex branch
+
+Branch `codex/harden-support-realism` hardens the gate without changing the deterministic pass/block thesis:
+- `gate.py` adds trusted-source correction mode for Contract A, explicit override reasons (`sla_risk`, `vip_customer`, `active_incident`, `missing_tool_access`, `engineering_owned_diagnostic`, `customer_impact`), support outcome labels, and lazy Anthropic import so deterministic gate tests do not require the API package. Oracle correction remains labeled lab-only.
+- `contracts.py` strengthens Contract B evidence checks: evidence handles, ruled-out branches, strict causes, and open unknowns must be supported by reconstructed/expected evidence; prose-only open branches still pass only when they name real open branches, otherwise checklist-shaped garbage blocks.
+- `contract_b_anchors/` now includes 8 additional ugly B2B anchors for incomplete logs, wrong first diagnosis, known-issue suspicion, missing repro/SLA pressure, tool-access limitation, active incident, conflicting evidence, and VIP pressure.
+- `rollup.py` reports support-language outcomes (`pass_clean`, `pass_prose_flagged`, `blocked`, `override_required`) and operational gap labels.
+
+Verification: `python3 -m pytest tests/ -q` could not run because `pytest` is not installed in this shell; `python3 -m compileall .` passed, and all `tests/test_contracts.py` test functions passed via direct Python invocation.
+
+---
+
+## 2026-06-26 · Flow 2 live batch runner — Codex branch
+
+Branch `codex/harden-support-realism` now includes a live Contract B batch path:
+- `b2b_rollup.py` runs the human→engineering flow across every `contract_b_anchors/` case: anchor support context → live `work_engineering_handoff` call → deterministic `check_handoff_b` gate → support-language rollup artifact.
+- `agent.py` now asks the engineering handoff agent to include `open_unknowns` when the cause is still open, and imports the Anthropic SDK lazily so deterministic tests do not require API dependencies.
+- `contracts.py` accepts `candidate_branches` as a structure-warning alias for `open_unknowns` when the branches match the reconstructed open state; generic unsupported branches still block.
+- Live run: `.venv/bin/python b2b_rollup.py` produced `outputs/b2b_rollup_20260626_154710.json`, `11/11` warm handoffs accepted, `0` blocked, `0` human-review warnings after the prompt/schema fix.
+
+Verification: direct invocation of all `tests/test_contracts.py` test functions passed; `.venv/bin/python -m compileall agent.py b2b_rollup.py contracts.py tests/test_contracts.py` passed; `git diff --check` passed.
+
+---
+
+## 2026-06-26 · Flow 2 hostile harness — Codex branch
+
+`b2b_rollup.py` now supports agent-facing profiles so Flow 2 can test non-spoon-fed handoffs:
+- `clean` preserves the previous gold-evidence baseline.
+- `evidence_starved` withholds exact evidence handles / ruled-out branches / open unknowns from the agent.
+- `distractor_wrong_cause` tempts a strict case toward a plausible but wrong cause while the gate keeps the true final cause.
+- `cold_dump` gives mostly complaint + urgency with no structured diagnosis.
+- `hostile` runs the fixed 3-case set: `level2_tool_access_limitation` / `level3_misrouted_ratelimit_actually_webhook_auth` / `level2_unresolved_workspace_handoff`.
+
+Live hostile run: `.venv/bin/python b2b_rollup.py --profile hostile` produced `outputs/b2b_rollup_20260626_160547.json`, `0/3` pass, `3/3` blocked. The intended support failures surfaced: missing evidence handles, unsupported ruled-out branches, unsupported open branches, and wrong likely cause (`likely_cause_not_supported`). This addresses the Opus critique that the earlier `11/11` live Flow 2 run was overfed by the harness.
+
+Verification: direct invocation of all `tests/test_contracts.py` test functions passed after adding hostile profile tests.

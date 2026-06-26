@@ -9,12 +9,31 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import anthropic
-
 from _api import get_api_key
 from contracts import check_handoff, GapReport
 
 MODEL = "claude-haiku-4-5-20251001"
+
+ALLOWED_OVERRIDE_REASONS = {
+    "sla_risk",
+    "vip_customer",
+    "active_incident",
+    "missing_tool_access",
+    "engineering_owned_diagnostic",
+    "customer_impact",
+}
+
+
+def support_outcome(*, released: bool, human_review_flag: bool, blocked: bool, override_reason: str = "") -> str:
+    if override_reason:
+        return "override_required"
+    if blocked and not released:
+        return "blocked"
+    if human_review_flag:
+        return "pass_prose_flagged"
+    if released:
+        return "pass_clean"
+    return "blocked"
 
 
 def _generate_corrected_note(
@@ -71,6 +90,8 @@ def _generate_corrected_note(
         "Return ONLY the JSON object."
     )
 
+    import anthropic
+
     client = anthropic.Anthropic(api_key=get_api_key())
     response = client.messages.create(
         model=MODEL,
@@ -90,6 +111,37 @@ def _generate_corrected_note(
         return {"_raw": raw, "_parse_error": True}
 
 
+
+
+def _trusted_source_values(state: dict[str, Any]) -> dict[str, Any]:
+    fixture = state.get("_fixture", {})
+    sources = fixture.get("trusted_sources", {})
+    if "ai_to_human" in sources:
+        return dict(sources["ai_to_human"])
+    if "contract_a" in sources:
+        return dict(sources["contract_a"])
+    if "system_records" in fixture:
+        return dict(fixture["system_records"])
+    return {}
+
+
+def _generate_trusted_source_correction(
+    candidate: dict[str, Any],
+    gap_report: GapReport,
+    state: dict[str, Any],
+) -> tuple[dict[str, Any], list[str]]:
+    corrected = dict(candidate)
+    trusted = _trusted_source_values(state)
+    unfillable: list[str] = []
+
+    for field in gap_report.missing_fields:
+        if field in trusted and trusted[field] not in (None, "", [], {}):
+            corrected[field] = trusted[field]
+        else:
+            unfillable.append(field)
+
+    return corrected, unfillable
+
 class HandoffPackage:
     def __init__(self, case_id: str, candidate: dict[str, Any]):
         self.case_id = case_id
@@ -103,6 +155,8 @@ class HandoffPackage:
         # release — it routes the released handoff to a human for review.
         self.human_review_flag = False
         self.human_review_reason = ""
+        self.override_reason = ""
+        self.unfillable_missing_fields: list[str] = []
 
     def release(self) -> None:
         self.released = True
@@ -110,6 +164,15 @@ class HandoffPackage:
     @property
     def final_handoff(self) -> dict[str, Any]:
         return self.corrected if self.corrected else self.candidate
+
+    @property
+    def outcome(self) -> str:
+        return support_outcome(
+            released=self.released,
+            human_review_flag=self.human_review_flag,
+            blocked=self.blocked,
+            override_reason=self.override_reason,
+        )
 
 
 def release_to_copilot(package: HandoffPackage) -> None:
@@ -128,6 +191,8 @@ def run_gate(
     state: dict[str, Any],
     judge_verdict: dict[str, Any] | None,
     check_fn=check_handoff,
+    correction_mode: str = "oracle",
+    override_reason: str = "",
 ) -> HandoffPackage:
     """Run the gate: check, block if needed, correct, release.
 
@@ -143,6 +208,11 @@ def run_gate(
 
     gap_report = check_fn(candidate, expected, state)
     package.gap_report = gap_report
+
+    if override_reason:
+        if override_reason not in ALLOWED_OVERRIDE_REASONS:
+            raise ValueError(f"Unsupported override reason: {override_reason}")
+        package.override_reason = override_reason
 
     # Judge = soft signal. A disagreement routes to a human; it does not block.
     if judge_verdict is not None and not judge_verdict.get("pass", True):
@@ -164,16 +234,29 @@ def run_gate(
         package.release()
         return package
 
-    # BLOCKED on mechanical gaps — intercept and hold. Release only after a verified correction.
+    # BLOCKED on mechanical gaps — intercept and hold. Release only after a verified correction
+    # or an explicit support override. Override is not a pass; it records why the risk moved.
     package.blocked = True
 
-    corrected = _generate_corrected_note(
-        candidate, expected, gap_report, judge_verdict, state
-    )
-    package.corrected = corrected
+    if override_reason:
+        package.release()
+        return package
+
+    if correction_mode == "trusted_sources":
+        corrected, unfillable = _generate_trusted_source_correction(candidate, gap_report, state)
+        package.corrected = corrected
+        package.unfillable_missing_fields = unfillable
+    elif correction_mode == "oracle":
+        corrected = _generate_corrected_note(
+            candidate, expected, gap_report, judge_verdict, state
+        )
+        package.corrected = corrected
+    else:
+        raise ValueError(f"Unsupported correction mode: {correction_mode}")
 
     # Re-check the corrected note before releasing — the hold stands until the
     # gaps are actually filled.
+    corrected = package.corrected or {}
     if not corrected.get("_parse_error"):
         recheck = check_fn(corrected, expected, state)
         if recheck.passed:

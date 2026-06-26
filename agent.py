@@ -9,13 +9,12 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import anthropic
-
 from _api import get_api_key
 from contracts import ALL_REQUIRED_KEYS, ALL_REQUIRED_KEYS_B
 
 
 MODEL = "claude-haiku-4-5-20251001"
+ENGINEERING_OUTPUT_KEYS = ALL_REQUIRED_KEYS_B + ["open_unknowns"]
 
 
 def build_transcript_text(turns: list[dict[str, Any]]) -> str:
@@ -47,6 +46,8 @@ If you don't have something, leave that key out."""
 def work_case(fixture: dict[str, Any]) -> dict[str, Any]:
     """Have Claude work the case and produce a candidate handoff note."""
     transcript = build_transcript_text(fixture["transcript_turns"])
+
+    import anthropic
 
     client = anthropic.Anthropic(api_key=get_api_key())
     response = client.messages.create(
@@ -94,11 +95,12 @@ You've worked the case as far as support tools allow and now write a quick
 handoff note for engineering.
 
 Return ONLY a JSON object using these keys:
-{json.dumps(ALL_REQUIRED_KEYS_B)}
+{json.dumps(ENGINEERING_OUTPUT_KEYS)}
 
 Fill in what you can from the conversation and the case state. You don't need to
 be exhaustive — just get engineering what they need to pick it up. If you don't
-have something, leave that key out."""
+have something, leave that key out. If the cause is still open, put the remaining
+branches in open_unknowns."""
 
 
 def work_engineering_handoff(
@@ -118,6 +120,8 @@ def work_engineering_handoff(
         "final_cause": state.get("final_cause", ""),
         "next_check": state.get("next_check", ""),
     }
+
+    import anthropic
 
     client = anthropic.Anthropic(api_key=get_api_key())
     response = client.messages.create(

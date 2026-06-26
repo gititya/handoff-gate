@@ -1,0 +1,31 @@
+{
+  "schema_version": "contract_b_anchor.v1",
+  "case_id": "level2_incomplete_logs_customer_urgent",
+  "source_fixture": "hand-authored realism anchor",
+  "leniency_arm": "lenient",
+  "support_reality": "incomplete_logs_customer_urgency",
+  "derivation_note": "Hand-authored ugly support anchor for realism hardening; deterministic review fixture, not generated stock data.",
+  "expected_handoff": {
+    "human_to_engineering": {
+      "customer_account_identity": "B2B workspace account with support-verified admin contact",
+      "affected_scope": "Customer-reported affected workflow; scope must be confirmed from evidence.",
+      "system_discrepancy": "Support-visible symptoms and backend/system evidence do not fully line up yet.",
+      "evidence_handles": [
+        "customer video: export spinner for 12 minutes",
+        "client timestamp: 2026-06-26T09:14Z"
+      ],
+      "support_ruled_out": [
+        "browser_cache",
+        "user_permission_missing"
+      ],
+      "likely_cause": "Undetermined \u2014 missing server logs leave export_worker_timeout vs customer_network_path both open.",
+      "confidence": "low (open)",
+      "open_unknowns": [
+        "export_worker_timeout",
+        "customer_network_path"
+      ],
+      "impact_urgency": "High \u2014 customer has an executive report due today",
+      "specific_ask": "Pull server-side export logs for the timestamp and confirm whether the worker timed out."
+    }
+  }
+}

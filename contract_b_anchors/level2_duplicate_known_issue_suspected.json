@@ -1,0 +1,31 @@
+{
+  "schema_version": "contract_b_anchor.v1",
+  "case_id": "level2_duplicate_known_issue_suspected",
+  "source_fixture": "hand-authored realism anchor",
+  "leniency_arm": "lenient",
+  "support_reality": "known_issue_suspicion",
+  "derivation_note": "Hand-authored ugly support anchor for realism hardening; deterministic review fixture, not generated stock data.",
+  "expected_handoff": {
+    "human_to_engineering": {
+      "customer_account_identity": "B2B workspace account with support-verified admin contact",
+      "affected_scope": "Customer-reported affected workflow; scope must be confirmed from evidence.",
+      "system_discrepancy": "Support-visible symptoms and backend/system evidence do not fully line up yet.",
+      "evidence_handles": [
+        "status page shows degraded webhooks",
+        "account has 418 queued webhook retries"
+      ],
+      "support_ruled_out": [
+        "customer_secret_rotation",
+        "quota_exhaustion"
+      ],
+      "likely_cause": "Undetermined \u2014 known incident INC-4421 vs account-specific webhook backlog both remain open.",
+      "confidence": "low (open)",
+      "open_unknowns": [
+        "known_incident_INC_4421",
+        "account_webhook_backlog"
+      ],
+      "impact_urgency": "Medium \u2014 integrations delayed but not fully down",
+      "specific_ask": "Check whether this account is part of INC-4421 or has a separate retry backlog."
+    }
+  }
+}
