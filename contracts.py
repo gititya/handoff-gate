@@ -113,14 +113,20 @@ class GapReport:
     # prose rather than the dedicated open_unknowns list). Routes to human review.
     structure_warning: bool = False
     structure_warning_reason: str = ""
+    evidence_gaps: list[str] = field(default_factory=list)
 
     @property
     def passed(self) -> bool:
-        return not self.missing_always and not self.missing_other and not self.thin_but_silent
+        return (
+            not self.missing_always
+            and not self.missing_other
+            and not self.thin_but_silent
+            and not self.evidence_gaps
+        )
 
     @property
     def missing_fields(self) -> list[str]:
-        return self.missing_always + self.missing_other
+        return self.missing_always + self.missing_other + self.evidence_gaps
 
 
 def check_handoff(
@@ -190,6 +196,70 @@ def _names_open_state_in_prose(likely_cause: Any) -> bool:
     return any(marker in low for marker in _OPEN_STATE_MARKERS)
 
 
+
+
+def _as_list(val: Any) -> list[str]:
+    if _is_empty(val):
+        return []
+    if isinstance(val, list):
+        return [str(item).strip() for item in val if str(item).strip()]
+    return [str(val).strip()]
+
+
+def _norm_token(value: Any) -> str:
+    return "".join(ch for ch in str(value).lower() if ch.isalnum())
+
+
+_TOKEN_STOPWORDS = {
+    "a", "an", "and", "as", "at", "both", "but", "by", "case", "either",
+    "for", "from", "in", "is", "issue", "of", "or", "path", "state", "the",
+    "to", "vs", "with",
+}
+
+
+def _word_tokens(value: Any) -> set[str]:
+    raw = str(value).lower().replace("_", " ").replace("-", " ")
+    token = ""
+    tokens: set[str] = set()
+    for ch in raw:
+        if ch.isalnum():
+            token += ch
+        elif token:
+            if len(token) > 1 and token not in _TOKEN_STOPWORDS:
+                tokens.add(token)
+            token = ""
+    if token and len(token) > 1 and token not in _TOKEN_STOPWORDS:
+        tokens.add(token)
+    return tokens
+
+
+def _has_named_overlap(candidate_values: Any, evidence_values: Any) -> bool:
+    candidate_tokens = [_norm_token(v) for v in _as_list(candidate_values)]
+    evidence_tokens = [_norm_token(v) for v in _as_list(evidence_values)]
+    candidate_tokens = [v for v in candidate_tokens if v]
+    evidence_tokens = [v for v in evidence_tokens if v]
+    if any(c in e or e in c for c in candidate_tokens for e in evidence_tokens):
+        return True
+
+    for candidate in _as_list(candidate_values):
+        candidate_words = _word_tokens(candidate)
+        if not candidate_words:
+            continue
+        for evidence in _as_list(evidence_values):
+            evidence_words = _word_tokens(evidence)
+            if len(candidate_words & evidence_words) >= 2:
+                return True
+    return False
+
+
+def _likely_cause_has_evidence(candidate: dict[str, Any], expected: dict[str, Any], state: dict[str, Any]) -> bool:
+    likely_cause = candidate.get("likely_cause")
+    if _is_empty(likely_cause):
+        return False
+    expected_cause = expected.get("likely_cause")
+    final_cause = state.get("final_cause")
+    return _has_named_overlap(likely_cause, [expected_cause, final_cause])
+
 def check_handoff_b(
     candidate: dict[str, Any],
     expected: dict[str, Any],
@@ -213,11 +283,23 @@ def check_handoff_b(
         if _is_empty(candidate.get(key)):
             report.missing_other.append(key)
 
+    if not _is_empty(candidate.get("evidence_handles")):
+        evidence_pool = state.get("facts", []) + expected.get("evidence_handles", [])
+        if not _has_named_overlap(candidate.get("evidence_handles"), evidence_pool):
+            report.evidence_gaps.append("evidence_handles_not_supported")
+
+    if not _is_empty(candidate.get("support_ruled_out")):
+        ruled_out_pool = state.get("ruled_out_branches", []) + expected.get("support_ruled_out", [])
+        if not _has_named_overlap(candidate.get("support_ruled_out"), ruled_out_pool):
+            report.evidence_gaps.append("support_ruled_out_not_supported")
+
     cause_keys = ["likely_cause", "confidence"]
     if leniency.mode == "strict":
         for key in cause_keys:
             if _is_empty(candidate.get(key)):
                 report.missing_other.append(key)
+        if not _is_empty(candidate.get("likely_cause")) and not _likely_cause_has_evidence(candidate, expected, state):
+            report.evidence_gaps.append("likely_cause_not_supported")
     else:
         # Lenient arm — cause is genuinely open. An honest WARM escalation must
         # still name what is still open; a COLD one (no work, says nothing about
@@ -226,17 +308,34 @@ def check_handoff_b(
         # `likely_cause` prose — but soft-flag prose-only for structure.
         cause_val = candidate.get("likely_cause", "")
         conf_val = candidate.get("confidence", "")
-        if _is_empty(cause_val) and _is_empty(conf_val):
+        candidate_branch_alias = candidate.get("candidate_branches")
+        if not _is_empty(candidate.get("open_unknowns")):
+            open_pool = state.get("candidate_branches", []) + expected.get("open_unknowns", [])
+            if not _has_named_overlap(candidate.get("open_unknowns"), open_pool):
+                report.evidence_gaps.append("open_unknowns_not_supported")
+        elif not _is_empty(candidate_branch_alias):
+            open_pool = state.get("candidate_branches", []) + expected.get("open_unknowns", [])
+            if not _has_named_overlap(candidate_branch_alias, open_pool):
+                report.evidence_gaps.append("open_unknowns_not_supported")
+            else:
+                report.structure_warning = True
+                report.structure_warning_reason = (
+                    "Open branches named in candidate_branches, not the dedicated "
+                    "open_unknowns list — accepted; structure them as open_unknowns."
+                )
+        elif _is_empty(cause_val) and _is_empty(conf_val):
             report.thin_but_silent = True  # silent → block
-        elif not _is_empty(candidate.get("open_unknowns")):
-            pass  # clean warm escalation — open branches in the dedicated list
         elif _names_open_state_in_prose(cause_val):
-            # Substance is there, structure isn't — pass, but route to human review.
-            report.structure_warning = True
-            report.structure_warning_reason = (
-                "Open branches named in likely_cause prose, not the dedicated "
-                "open_unknowns list — accepted; structure them as a list."
-            )
+            open_pool = state.get("candidate_branches", []) + expected.get("open_unknowns", [])
+            if not _has_named_overlap(cause_val, open_pool):
+                report.evidence_gaps.append("open_unknowns_not_supported")
+            else:
+                # Substance is there, structure isn't — pass, but route to human review.
+                report.structure_warning = True
+                report.structure_warning_reason = (
+                    "Open branches named in likely_cause prose, not the dedicated "
+                    "open_unknowns list — accepted; structure them as a list."
+                )
         else:
             # Cold: no open_unknowns and prose doesn't state what's still open.
             report.thin_but_silent = True

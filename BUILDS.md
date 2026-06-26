@@ -62,3 +62,51 @@ Stance moved from isolation to **integration**: the repos are being wired into o
 > Append-only. Refines the Contract B note above after a GPT-5.5 adversarial review.
 
 The lenient arm was false-blocking honest **warm** escalations that named the open branches in `likely_cause` prose but left `open_unknowns` empty (it graded format, not substance). Fix: `check_handoff_b` accepts open branches from **either** the dedicated list **or** prose, and **soft-flags** prose-only (`GapReport.structure_warning`, routes to human, never blocks); cold escalations still block. The LLM-extractor that would replace the deterministic prose-scan stopgap is **deferred and data-gated** — analytics (`customer-support-ai-os/outputs/gate_analytics.jsonl`) count prose-only passes; build the extractor only when they accumulate. Rationale: `docs/llm-extractor-deferral.md`.
+
+---
+
+## 2026-06-26 — Realism hardening branch
+
+```yaml
+status: "in-progress"
+current_state: "Branch codex/harden-support-realism adds support-realism hardening: trusted-source correction mode, Contract B evidence support checks, override-required lane, support-language rollup outcomes, and 8 ugly B2B anchors."
+next_action: "Have Opus do an adversarial support-realism review of the branch, then decide which review points to apply before PR."
+things_to_know:
+  - "The deterministic mechanical gate remains the only hard blocker; no LLM extractor was added."
+  - "Oracle correction remains lab-only; trusted-source correction refuses to invent unavailable fields."
+  - "pytest is not installed in this shell, so verification used compileall plus direct deterministic test invocation."
+updated_at: "2026-06-26"
+updated_by: "codex"
+```
+
+---
+
+## 2026-06-26 — Flow 2 hostile harness
+
+```yaml
+status: "in-progress"
+current_state: "Branch codex/harden-support-realism now has a hostile Flow 2 harness: clean baseline still exists, but --profile hostile starves/misleads the live engineering handoff agent while the deterministic gate grades against full anchor truth."
+next_action: "Ask Opus to review whether the hostile failures are realistic enough, or whether the source transcripts should move upstream into support-call-generator."
+things_to_know:
+  - "Latest hostile artifact: outputs/b2b_rollup_20260626_160547.json."
+  - "Hostile Flow 2 result: 0/3 passed, 3/3 blocked; failures covered missing evidence, unsupported ruled-out/open branches, and wrong likely cause."
+  - "This fixes the spoon-feeding harness issue without changing the deterministic gate thesis."
+updated_at: "2026-06-26"
+updated_by: "codex"
+```
+
+---
+
+## 2026-06-26 — Flow 2 live batch runner
+
+```yaml
+status: "in-progress"
+current_state: "Branch codex/harden-support-realism now runs Flow 2 live at batch scale: b2b_rollup.py turns every B2B anchor into a live generated engineering handoff and gates it with Contract B."
+next_action: "Have Opus review whether the 11/11 live Flow 2 pass rate is too friendly, especially whether anchor prompts over-feed the expected evidence."
+things_to_know:
+  - "Latest live Flow 2 artifact: outputs/b2b_rollup_20260626_154710.json."
+  - "Live Flow 2 result: 11/11 warm engineering handoffs accepted, 0 blocked, 0 human-review warnings after the open_unknowns prompt fix."
+  - "The hard gate remains deterministic; the LLM only writes the candidate handoff."
+updated_at: "2026-06-26"
+updated_by: "codex"
+```
