@@ -166,6 +166,79 @@ def check_handoff(
     return report
 
 
+def _note_dump(note: Any) -> dict[str, Any]:
+    if hasattr(note, "model_dump"):
+        return note.model_dump(mode="python")
+    return dict(note)
+
+
+def _claim_lookup(note: dict[str, Any]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for item in note.get("confirmed_facts", []):
+        if isinstance(item, dict) and item.get("claim"):
+            out[item["claim"]] = item.get("value")
+    return out
+
+
+def _branch_summaries(items: Any) -> list[str]:
+    summaries: list[str] = []
+    rows = items if isinstance(items, list) else _as_list(items)
+    for item in rows:
+        if isinstance(item, dict):
+            summary = item.get("summary")
+        else:
+            summary = item
+        if summary not in (None, "", [], {}):
+            summaries.append(str(summary))
+    return summaries
+
+
+def from_handoff_note(note: Any, *, contract: str = "A") -> dict[str, Any]:
+    """Adapt support_ontology.HandoffNote to an existing gate contract.
+
+    This is deliberately a shape adapter only. Contract A/B checks remain unchanged.
+    """
+    data = _note_dump(note)
+    facts = _claim_lookup(data)
+    identity = data.get("identity", {})
+    claim = data.get("claim", {})
+    charge_ref = data.get("charge_ref") or {}
+
+    if contract.upper() == "A":
+        return {
+            "customer_account_identity": identity.get("value"),
+            "account_id": facts.get("account_id"),
+            "subscription_id": facts.get("subscription_id"),
+            "charge": charge_ref.get("value") or facts.get("charge"),
+            "customer_claim": claim.get("value"),
+            "desired_outcome": facts.get("desired_outcome"),
+            "checks_with_results": facts.get("checks_with_results"),
+            "ruled_out_branches": facts.get("ruled_out_branches") or _branch_summaries(data.get("ruled_out", [])),
+            "likely_cause": data.get("likely_cause"),
+            "confidence": data.get("confidence"),
+            "risk_urgency": facts.get("risk_urgency") or data.get("risk", {}).get("level"),
+            "next_step": facts.get("next_step") or data.get("handoff_reason"),
+            "what_not_to_promise": facts.get("what_not_to_promise") or "No refund, cause, fix, or timeline promise.",
+        }
+
+    if contract.upper() == "B":
+        return {
+            "customer_account_identity": identity.get("value"),
+            "affected_scope": facts.get("affected_scope"),
+            "system_discrepancy": claim.get("value") or facts.get("system_discrepancy"),
+            "evidence_handles": facts.get("evidence_handles"),
+            "specific_ask": facts.get("specific_ask") or data.get("handoff_reason"),
+            "support_ruled_out": facts.get("support_ruled_out") or _branch_summaries(data.get("ruled_out", [])),
+            "impact_urgency": facts.get("impact_urgency") or data.get("risk", {}).get("level"),
+            "likely_cause": data.get("likely_cause"),
+            "confidence": data.get("confidence"),
+            "open_unknowns": data.get("open_unknowns", []),
+            "candidate_branches": _branch_summaries(data.get("candidate_branches", [])),
+        }
+
+    raise ValueError(f"Unsupported handoff contract: {contract}")
+
+
 def _is_empty(val: Any) -> bool:
     if val is None:
         return True

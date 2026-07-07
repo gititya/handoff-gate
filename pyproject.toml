@@ -7,6 +7,20 @@ dependencies = [
     "anthropic>=0.40.0,<1.0",
 ]
 
+[tool.setuptools]
+py-modules = [
+    "_api",
+    "agent",
+    "b2b_rollup",
+    "contracts",
+    "demo",
+    "engine",
+    "gate",
+    "grade",
+    "rollup",
+    "router",
+]
+
 [project.optional-dependencies]
 judge = [
     "mlx>=0.22.0",
