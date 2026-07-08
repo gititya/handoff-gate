@@ -2,14 +2,17 @@
 
 ```yaml
 status: "in-progress"
-current_state: "Phases 0–1 + 3 shipped. AI→human gate (Contract A) runs end-to-end: reconstruct → route → grade → intercept-and-hold → corrected note → release, plus a weekly roll-up over the 10-case batch."
-next_action: "Decide Phase 2: generate B2C product-bug cases upstream so Contract B (human→eng) can be built — it is blocked, not buildable today."
+current_state: "Pinned for M4 as the deterministic HandoffNote quality gate; Flow 0 replays a real voice-support H1 note through Contract A with no missing fields."
+next_action: "Use customer-support-ai-os/FRONT_DOOR.md as the current cross-repo reviewer entrypoint."
 things_to_know:
+  - "Roadmap source: /Users/aditya/Documents/Projects/SUPPORT_MASTER_PLAN.md."
+  - "M4 front door: /Users/aditya/Documents/Projects/customer-support-ai-os/FRONT_DOOR.md."
+  - "M4 Flow 0 trace: /Users/aditya/Documents/Projects/customer-support-ai-os/outputs/flow0_H1_20260708_181803.json."
   - "Contract B is a B2C PRODUCT-BUG hop, not billing; no B2C product-bug data exists yet (generator is billing-only, realtime fixtures are B2B/off-limits)."
   - "Roll-up's real finding: AI handoffs drop structured account/subscription IDs (not present in the transcript it reads); the gate catches + fills them."
   - "Phase 4 (non-technical presentation polish) not started."
-updated_at: "2026-06-25"
-updated_by: "claude"
+updated_at: "2026-07-08"
+updated_by: "codex"
 ```
 
 **Repo:** `gititya/handoff_agent` · **Working dir:** `handoff-engine` · **Status:** Phases 0–1 + 3 shipped; Phase 2 deferred (data blocker); Phase 4 not started
