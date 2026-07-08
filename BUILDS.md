@@ -7,7 +7,7 @@ next_action: "Use customer-support-ai-os/FRONT_DOOR.md as the current cross-repo
 things_to_know:
   - "Roadmap source: /Users/aditya/Documents/Projects/SUPPORT_MASTER_PLAN.md."
   - "M4 front door: /Users/aditya/Documents/Projects/customer-support-ai-os/FRONT_DOOR.md."
-  - "M4 Flow 0 trace: /Users/aditya/Documents/Projects/customer-support-ai-os/outputs/flow0_H1_20260708_181803.json."
+  - "M4 Flow 0 trace: /Users/aditya/Documents/Projects/customer-support-ai-os/outputs/flow0_H1.json."
   - "Contract B is a B2C PRODUCT-BUG hop, not billing; no B2C product-bug data exists yet (generator is billing-only, realtime fixtures are B2B/off-limits)."
   - "Roll-up's real finding: AI handoffs drop structured account/subscription IDs (not present in the transcript it reads); the gate catches + fills them."
   - "Phase 4 (non-technical presentation polish) not started."
