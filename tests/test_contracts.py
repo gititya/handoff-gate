@@ -7,12 +7,15 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, "/Users/aditya/Documents/Projects/customer-support-ai-os")
+sys.path.insert(0, "/Users/aditya/Documents/Projects/support-state-core/src")
 
 from contracts import (  # noqa: E402
     check_handoff,
     check_handoff_b,
     derive_leniency,
     ALWAYS_REQUIRED_KEYS_B,
+    from_handoff_note,
 )
 from engine import reconstruct_fixture  # noqa: E402
 from gate import run_gate, support_outcome  # noqa: E402
@@ -23,6 +26,14 @@ from b2b_rollup import (  # noqa: E402
     grade_anchor,
     load_anchor,
 )
+from support_ontology import (  # noqa: E402
+    HandoffNote,
+    IssueType,
+    Risk,
+    RiskAssessment,
+    SignalSource,
+)
+from support_ontology.handoff_note import BranchRef, EvidenceBackedClaim  # noqa: E402
 
 
 # --- fixtures ---------------------------------------------------------------
@@ -203,6 +214,69 @@ def _contract_a_expected():
     }
 
 
+def _note_from_contract_a(expected):
+    facts = [
+        EvidenceBackedClaim(claim=key, value=value, evidence_handles=[f"expected:{key}"])
+        for key, value in expected.items()
+        if key not in {"customer_account_identity", "customer_claim", "charge", "likely_cause", "confidence"}
+    ]
+    return HandoffNote(
+        identity=EvidenceBackedClaim(
+            claim="customer_account_identity",
+            value=expected["customer_account_identity"],
+            evidence_handles=["expected:identity"],
+        ),
+        issue_type=IssueType.BILLING,
+        claim=EvidenceBackedClaim(
+            claim="customer_claim",
+            value=expected["customer_claim"],
+            evidence_handles=["expected:claim"],
+            source=SignalSource.CUSTOMER_STATED,
+        ),
+        charge_ref=EvidenceBackedClaim(
+            claim="charge",
+            value=expected["charge"],
+            evidence_handles=["expected:charge"],
+        ),
+        confirmed_facts=facts,
+        ruled_out=[BranchRef(summary=item) for item in expected["ruled_out_branches"]],
+        likely_cause=expected["likely_cause"],
+        confidence=expected["confidence"],
+        risk=RiskAssessment(level=Risk.MEDIUM),
+        handoff_reason=expected["next_step"],
+        gated_summary="Customer reports an unrecognized charge and asks for review.",
+    )
+
+
+def _note_from_contract_b(expected, *, open_state):
+    facts = [
+        EvidenceBackedClaim(claim=key, value=value, evidence_handles=[f"expected:{key}"])
+        for key, value in expected.items()
+        if key not in {"customer_account_identity", "system_discrepancy", "support_ruled_out", "likely_cause", "confidence", "open_unknowns"}
+    ]
+    return HandoffNote(
+        identity=EvidenceBackedClaim(
+            claim="customer_account_identity",
+            value=expected["customer_account_identity"],
+            evidence_handles=["expected:identity"],
+        ),
+        issue_type=IssueType.PRODUCT_BUG,
+        claim=EvidenceBackedClaim(
+            claim="system_discrepancy",
+            value=expected["system_discrepancy"],
+            evidence_handles=["expected:system_discrepancy"],
+        ),
+        confirmed_facts=facts,
+        open_unknowns=expected.get("open_unknowns", []),
+        ruled_out=[BranchRef(summary=item) for item in expected["support_ruled_out"]],
+        likely_cause=expected["likely_cause"],
+        confidence=expected["confidence"],
+        risk=RiskAssessment(level=Risk.HIGH if open_state else Risk.MEDIUM),
+        handoff_reason=expected["specific_ask"],
+        gated_summary="Support is escalating the product issue with evidence handles.",
+    )
+
+
 def _contract_a_state(trusted_sources):
     return {
         "case_id": "billing",
@@ -253,6 +327,46 @@ def test_trusted_source_correction_refuses_to_invent_missing_fields():
     assert package.corrected["account_id"] == "acct_123"
     assert "subscription_id" in package.unfillable_missing_fields
     assert package.outcome == "blocked"
+
+
+def test_contract_a_handoff_note_adapter_preserves_gate_verdict_bytes():
+    expected = _contract_a_expected()
+    state = _contract_a_state({"account_id": "acct_123", "subscription_id": "sub_123"})
+    direct = check_handoff(expected, expected, state)
+    adapted = check_handoff(from_handoff_note(_note_from_contract_a(expected)), expected, state)
+
+    assert adapted == direct
+    assert adapted.missing_fields == direct.missing_fields
+
+
+def test_contract_b_handoff_note_adapter_preserves_gate_verdict_bytes():
+    state = reconstruct_fixture(_fixture(with_cause=False))
+    expected = _complete_handoff(open_state=True)
+    direct = check_handoff_b(expected, expected, state)
+    adapted = check_handoff_b(
+        from_handoff_note(_note_from_contract_b(expected, open_state=True), contract="B"),
+        expected,
+        state,
+    )
+
+    assert adapted == direct
+    assert adapted.missing_fields == direct.missing_fields
+
+
+def test_thin_handoff_note_blocks_before_release():
+    expected = _contract_a_expected()
+    state = _contract_a_state({"account_id": "acct_123"})
+    note = _note_from_contract_a(expected)
+    candidate = from_handoff_note(note)
+    candidate["subscription_id"] = ""
+
+    package = run_gate(
+        "billing", candidate, expected, state, None,
+        check_fn=check_handoff, correction_mode="trusted_sources",
+    )
+
+    assert package.released is False
+    assert "subscription_id" in package.gap_report.missing_fields
 
 
 def test_override_required_releases_only_with_recorded_reason():
