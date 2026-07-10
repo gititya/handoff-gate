@@ -2,8 +2,8 @@
 
 ```yaml
 status: "in-progress"
-current_state: "Pinned for M4 as the deterministic HandoffNote quality gate; Flow 0 replays a real voice-support H1 note through Contract A with no missing fields."
-next_action: "Use customer-support-ai-os/FRONT_DOOR.md as the current cross-repo reviewer entrypoint."
+current_state: "Merged on main as the deterministic HandoffNote quality gate; Flow 0 replays the live voice-support H1 note through Contract A with no missing fields."
+next_action: "Use customer-support-ai-os/FRONT_DOOR.md as the current cross-repo reviewer entrypoint; re-proof after any consumed-repo commit."
 things_to_know:
   - "Roadmap source: /Users/aditya/Documents/Projects/SUPPORT_MASTER_PLAN.md."
   - "M4 front door: /Users/aditya/Documents/Projects/customer-support-ai-os/FRONT_DOOR.md."
@@ -11,7 +11,7 @@ things_to_know:
   - "Contract B is a B2C PRODUCT-BUG hop, not billing; no B2C product-bug data exists yet (generator is billing-only, realtime fixtures are B2B/off-limits)."
   - "Roll-up's real finding: AI handoffs drop structured account/subscription IDs (not present in the transcript it reads); the gate catches + fills them."
   - "Phase 4 (non-technical presentation polish) not started."
-updated_at: "2026-07-08"
+updated_at: "2026-07-10"
 updated_by: "codex"
 ```
 
