@@ -6,8 +6,8 @@ current_state: "Merged on main as the deterministic HandoffNote quality gate; Fl
 next_action: "Use customer-support-ai-os/FRONT_DOOR.md as the current cross-repo reviewer entrypoint; re-proof after any consumed-repo commit."
 things_to_know:
   - "Roadmap source: /Users/aditya/Documents/Projects/SUPPORT_MASTER_PLAN.md."
-  - "M4 front door: /Users/aditya/Documents/Projects/customer-support-ai-os/FRONT_DOOR.md."
-  - "M4 Flow 0 trace: /Users/aditya/Documents/Projects/customer-support-ai-os/outputs/flow0_H1.json."
+  - "M4 front door: /Users/aditya/Documents/Projects/support/customer-support-ai-os/FRONT_DOOR.md."
+  - "M4 Flow 0 trace: /Users/aditya/Documents/Projects/support/customer-support-ai-os/outputs/flow0_H1.json."
   - "Contract B is a B2C PRODUCT-BUG hop, not billing; no B2C product-bug data exists yet (generator is billing-only, realtime fixtures are B2B/off-limits)."
   - "Roll-up's real finding: AI handoffs drop structured account/subscription IDs (not present in the transcript it reads); the gate catches + fills them."
   - "Phase 4 (non-technical presentation polish) not started."
@@ -15,7 +15,7 @@ updated_at: "2026-07-10"
 updated_by: "codex"
 ```
 
-**Repo:** `gititya/handoff_agent` · **Working dir:** `handoff-engine` · **Status:** Phases 0–1 + 3 shipped; Phase 2 deferred (data blocker); Phase 4 not started
+**Repo:** `gititya/handoff-engine` · **Working dir:** `handoff-engine` · **Status:** Phases 0–1 + 3 shipped; Phase 2 deferred (data blocker); Phase 4 not started
 
 ## What this is
 The **Handoff Quality Gate** — the capstone of the customer-support AI portfolio. A vendor-neutral checkpoint that, at the moment a support case is handed off (AI→human), reconstructs the case, grades the handoff note against the right checklist, and **blocks it with a corrected version if incomplete**. A quality machine, not a responding machine. It never talks to the customer.
@@ -26,7 +26,7 @@ Hero demo: B2C disputed-charge case, AI→human hop. Proof-of-work on synthetic 
 | Dependency (`~/Documents/Projects/`) | Role | State |
 |---|---|---|
 | `support-call-generator` | case factory + `expected_handoff` answer key | ✅ ready (`exports/b2c_handoff_gate_seed`, 10 hard cases) |
-| `real-time_support_Updated` | reconstruction **engine** (reuse only, no B2C mode) | ✅ ready |
+| `support-copilot` | reconstruction **engine** (reuse only, no B2C mode) | ✅ ready |
 | `experiments/eval-judges` | `handoff_completeness` judge | ✅ passing on baseline |
 
 The new build here = the bridge: **router (Step 2) + gate decision & corrected-note (Step 4) + weekly roll-up (Step 5)**.

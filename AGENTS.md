@@ -10,11 +10,11 @@ The **bridge** that turns three existing repos into a live handoff quality gate.
 
 ## The pipeline (and what NOT to rebuild)
 ```
-support-call-generator ──► real-time_support_Updated ──► eval-judges ──► [THIS REPO: router + gate + corrected note + rollup]
+support-call-generator ──► support-copilot ──► eval-judges ──► [THIS REPO: router + gate + corrected note + rollup]
 (case + expected_handoff)   (reconstruct the case)        (grade handoff)
 ```
 - **`support-call-generator`** — pull the existing `exports/b2c_handoff_gate_seed` pack (10 hard B2C disputed-charge cases + `expected_handoff` answer key). Do NOT regenerate it.
-- **`real-time_support_Updated`** — **ENGINE REUSE ONLY.** Vendor its reconstruction loop (incremental Live Support State + evidence-timed final-cause gating + premature-answer penalty), parametrizing `CANONICAL_LABELS` and the fixture source. Do NOT import its B2B domain layer (`fixtures/`) and do NOT add a B2C mode to that repo.
+- **`support-copilot`** — **ENGINE REUSE ONLY.** Vendor its reconstruction loop (incremental Live Support State + evidence-timed final-cause gating + premature-answer penalty), parametrizing `CANONICAL_LABELS` and the fixture source. Do NOT import its B2B domain layer (`fixtures/`) and do NOT add a B2C mode to that repo.
 - **`experiments/eval-judges`** — the `handoff_completeness` judge is built and passing. Reuse it (input: `{ticket, agent_response, handoff_note}`; runs local MLX Qwen3-4B). It is Step 3, not a new build.
 
 ## Locked Phase 0 decisions (do not re-litigate)
@@ -49,6 +49,6 @@ The portfolio moved from an **isolation** stance to an **integration** stance (u
 
 - **The realtime B2B fixtures are IN-BOUNDS.** They are the natural Flow-2 (product-bug) source because the copilot only reconstructs that domain.
 - **Contract B is a B2B product-bug human→engineering handoff** (see `contracts.py::check_handoff_b`, anchors in `contract_b_anchors/`).
-- **The copilot is called, not re-implemented.** Flow-2 reconstruction is `real-time_support_Updated/run.py::run_fixture` (subprocess via the runner). The vendored `engine.py` replay stays for Flow-1 billing / fast deterministic checks.
+- **The copilot is called, not re-implemented.** Flow-2 reconstruction is `support-copilot/run.py::run_fixture` (subprocess via the runner). The vendored `engine.py` replay stays for Flow-1 billing / fast deterministic checks.
 - **The judge is soft evidence, not a hard blocker** (mechanical contract check is the release gate).
 - Still true and unchanged: PR-only (never push to `main`), confirm before commit/push, no secrets/PII, honest "I built the components" framing. Authoritative plan: `~/.Codex/plans/breezy-petting-thimble.md`.
