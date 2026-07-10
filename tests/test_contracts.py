@@ -7,8 +7,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-sys.path.insert(0, "/Users/aditya/Documents/Projects/customer-support-ai-os")
-sys.path.insert(0, "/Users/aditya/Documents/Projects/support-state-core/src")
+sys.path.insert(0, "/Users/aditya/Documents/Projects/support/customer-support-ai-os")
+sys.path.insert(0, "/Users/aditya/Documents/Projects/support/support-state-core/src")
 
 from contracts import (  # noqa: E402
     check_handoff,

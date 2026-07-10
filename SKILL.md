@@ -21,7 +21,7 @@ Confirmed anchor cases from the live pack (no regeneration):
 - **Contrast:** `call_3835c4f220` — fraud-flagged, `final_cause=""`, evidence open → lenient arm + `borderline` flag (gate must NOT demand confirmed cause, must demand open-state honesty).
 
 ### Phase 1 — Hero demo ✅ DONE (2026-06-25)
-End-to-end hero demo built and verified. Branch `feat/phase-1-hero-demo`, PR #1 open (`gititya/handoff_agent/pull/1`). Commit `d30d845`.
+End-to-end hero demo built and verified. Branch `feat/phase-1-hero-demo`, PR #1 open (`gititya/handoff-engine/pull/1`). Commit `d30d845`.
 
 **Files shipped:** `engine.py` · `contracts.py` · `router.py` · `agent.py` · `grade.py` · `gate.py` · `demo.py` · `pyproject.toml`
 
@@ -33,7 +33,7 @@ End-to-end hero demo built and verified. Branch `feat/phase-1-hero-demo`, PR #1 
 **Model rule:** Sonnet built, Opus reviews (next step: `/model opus` → `/review`).
 
 ### Phase 2 — Contract B + human→eng hop ⬜ DEFERRED (blocked on data)
-**Contract B is a B2C PRODUCT-BUG handoff, not billing** (Contracts.md 69–86). No B2C product-bug data exists: the generator pack is B2C-billing-only, and the `real-time_support_Updated` fixtures are **B2B** (webhook/API/workspace) — explicitly off-limits per CLAUDE.md. Two earlier wrong turns (reading the generator's billing-escalation block as Contract B; then sourcing B2B fixtures) were rejected. Contract B waits until B2C product-bug cases + a `human_to_engineering` answer key are generated upstream. See memory `contract-b-answer-key-debt`.
+**Contract B is a B2C PRODUCT-BUG handoff, not billing** (Contracts.md 69–86). No B2C product-bug data exists: the generator pack is B2C-billing-only, and the `support-copilot` fixtures are **B2B** (webhook/API/workspace) — explicitly off-limits per CLAUDE.md. Two earlier wrong turns (reading the generator's billing-escalation block as Contract B; then sourcing B2B fixtures) were rejected. Contract B waits until B2C product-bug cases + a `human_to_engineering` answer key are generated upstream. See memory `contract-b-answer-key-debt`.
 
 ### Phase 3 — Weekly roll-up ✅ DONE (2026-06-25)
 `rollup.py` batches the gate over the 10 B2C cases (Contract A). Branch `feat/phase-3-rollup`. Reports pass rate + top recurring gap + borderline count; saves `outputs/rollup_*.json`.
@@ -49,7 +49,7 @@ End-to-end hero demo built and verified. Branch `feat/phase-1-hero-demo`, PR #1 
 The portfolio decision changed from **isolation** ("engine reuse only, don't touch realtime's B2B fixtures") to **integration** (make the repos work together as one pipeline via a thin runner). Under that stance:
 
 - **Contract B is now a B2B product-bug human→engineering handoff** (not B2C). The realtime B2B fixtures are **in-bounds** — they are the natural Flow-2 source because the copilot only reconstructs that domain. The old "off-limits per CLAUDE.md" guard was an isolation-era artifact and is retired (see the CLAUDE.md SUPERSEDED note).
-- **The copilot (`real-time_support_Updated/run.py::run_fixture`) is the live Flow-2 reconstruction engine** — called by the runner, not re-implemented here.
+- **The copilot (`support-copilot/run.py::run_fixture`) is the live Flow-2 reconstruction engine** — called by the runner, not re-implemented here.
 - **Built this session (Phase 1 of the integration plan):**
   - Decoupled `engine.py` — removed the hard reach into the generator's export dir; added `reconstruct_fixture(fixture)` + `HANDOFF_FIXTURE_BASE` override so the gate is *handed* fixtures.
   - `contracts.py` — locked **Contract B** (`ALWAYS_REQUIRED_KEYS_B`, `check_handoff_b`); reuses `derive_leniency` (strict when evidence pinned the cause, lenient-but-must-name-open-unknowns otherwise).
