@@ -339,6 +339,23 @@ def test_contract_a_handoff_note_adapter_preserves_gate_verdict_bytes():
     assert adapted.missing_fields == direct.missing_fields
 
 
+def test_contract_a_adapter_never_authors_promise_constraints():
+    # The gate must not fabricate a field it is about to check: a note that
+    # doesn't state its promise constraints is held for one, not papered over.
+    expected = _contract_a_expected()
+    stripped = dict(expected)
+    stripped.pop("what_not_to_promise")
+    candidate = from_handoff_note(_note_from_contract_a(stripped))
+
+    assert candidate["what_not_to_promise"] is None
+
+    state = _contract_a_state({"account_id": "acct_123", "subscription_id": "sub_123"})
+    report = check_handoff(candidate, expected, state)
+
+    assert not report.passed
+    assert "what_not_to_promise" in report.missing_fields
+
+
 def test_contract_b_handoff_note_adapter_preserves_gate_verdict_bytes():
     state = reconstruct_fixture(_fixture(with_cause=False))
     expected = _complete_handoff(open_state=True)

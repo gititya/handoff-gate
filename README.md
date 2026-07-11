@@ -11,6 +11,14 @@ The decision is mechanical and reproducible. LLMs only ever sit at the edges (wr
 | 1 | AI bot → human (B2C billing) | A | Did the human get the account + the charge + the claim? |
 | 2 | Human → engineering (B2B product bug) | B | Did engineering get an *honest, grounded* escalation — not a cold dump or a confident guess? |
 
+**What each contract actually checks (honest scope):** Contract A — the Flow 1 / front-door
+showcase path — enforces **completeness with evidence-derived leniency**: required fields must
+be present, and an open case must name its unknowns. It does **not** verify that field contents
+are true against product records. The grounding checks (`*_not_supported`) currently exist on
+**Contract B only**, as the disclosed token-overlap stopgap described below. The note→contract
+adapter never authors a field on the note's behalf: a note missing its promise constraints is
+held for one, not defaulted.
+
 ## How a note is judged (Contract B)
 
 Leniency is **derived from the evidence**, never a metadata label — "given the evidence that arrived, was a confident cause reachable?"

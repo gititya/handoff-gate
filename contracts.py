@@ -218,7 +218,9 @@ def from_handoff_note(note: Any, *, contract: str = "A") -> dict[str, Any]:
             "confidence": data.get("confidence"),
             "risk_urgency": facts.get("risk_urgency") or data.get("risk", {}).get("level"),
             "next_step": facts.get("next_step") or data.get("handoff_reason"),
-            "what_not_to_promise": facts.get("what_not_to_promise") or "No refund, cause, fix, or timeline promise.",
+            # No fallback: the gate must never author a field it is about to check.
+            # A note that doesn't state its promise constraints gets held for one.
+            "what_not_to_promise": facts.get("what_not_to_promise"),
         }
 
     if contract.upper() == "B":
