@@ -109,3 +109,8 @@ Build is **done**. Two PRs merged to `main`:
 Final state: 26 unit tests pass on `main`. Live audit = `11/14` (11 clean warm + 3 hostile blocked). Flow 1 still releases (identity filled from records). Honesty bar written in README ("What done/honest means here").
 
 Known, accepted limitations (disclosed, not hidden): grounding + hostile harness are **Contract B only** — Flow 1/Contract A is presence-only; `gate_analytics.jsonl` is logged but not yet aggregated (extractor build-trigger is manual for now). Both are deferrable, not blockers. The word-match grounding stays a labeled stopgap (smartening it = the deferred LLM-extractor).
+
+## 2026-07-30 — Shipped documentation checkpoint
+
+- README and the current BUILDS header now describe both contracts, honest clean/hostile evidence,
+  the Flow 0 role, and zero pending work. Older phase sections remain below as history.
