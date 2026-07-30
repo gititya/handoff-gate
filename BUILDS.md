@@ -1,9 +1,9 @@
 # BUILDS.md — Handoff Quality Gate
 
 ```yaml
-status: "in-progress"
-current_state: "Merged on main as the deterministic HandoffNote quality gate; Flow 0 replays the live voice-support H1 note through Contract A with no missing fields."
-next_action: "Use customer-support-ai-os/FRONT_DOOR.md as the current cross-repo reviewer entrypoint; re-proof after any consumed-repo commit."
+status: "shipped"
+current_state: "The deterministic Contract A and Contract B handoff gate is shipped and pinned in the cross-repository Flow 0 proof; clean notes release and hostile notes block."
+next_action: "No pending work for the shipped gate; a new contract, extractor, or product domain starts as new scope."
 things_to_know:
   - "Roadmap source: /Users/aditya/Documents/Projects/support/Old_files/archived-docs/SUPPORT_MASTER_PLAN.md (archived)."
   - "M4 front door: /Users/aditya/Documents/Projects/support/customer-support-ai-os/FRONT_DOOR.md."
@@ -15,7 +15,10 @@ updated_at: "2026-07-10"
 updated_by: "codex"
 ```
 
-**Repo:** `gititya/handoff-engine` · **Working dir:** `handoff-engine` · **Status:** Phases 0–1 + 3 shipped; Phase 2 deferred (data blocker); Phase 4 not started
+**Repo:** `gititya/handoff-engine` · **Working dir:** `handoff-engine` · **Status:** shipped
+
+> The dated phase sections below are retained as history. The final 2026-06-26 closeout and the
+> shipped status above are current.
 
 ## What this is
 The **Handoff Quality Gate** — the capstone of the customer-support AI portfolio. A vendor-neutral checkpoint that, at the moment a support case is handed off (AI→human), reconstructs the case, grades the handoff note against the right checklist, and **blocks it with a corrected version if incomplete**. A quality machine, not a responding machine. It never talks to the customer.

@@ -2,6 +2,10 @@
 
 A deterministic (rule-based) gate that sits between support tiers and refuses to let a low-quality handoff move up. It intercepts the handoff note, checks it against a fixed contract, and **holds it until it's good enough** — it does not just score it.
 
+This shipped component is the mechanical handoff boundary in the wider Support system. Voice
+Support creates the B2C note, this repo checks it, and the SHA-pinned harness replays the accepted
+H1 case. Its evidence is intentionally mixed: clean cases release and hostile cases block.
+
 The decision is mechanical and reproducible. LLMs only ever sit at the edges (writing notes, an optional soft judge, a deferred prose→fields extractor). **No LLM is in the pass/block decision path** — that's what makes every block auditable: the reason is always a fixed field check, not a model's opinion.
 
 ## Two flows
