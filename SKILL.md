@@ -114,3 +114,14 @@ Known, accepted limitations (disclosed, not hidden): grounding + hostile harness
 
 - README and the current BUILDS header now describe both contracts, honest clean/hostile evidence,
   the Flow 0 role, and zero pending work. Older phase sections remain below as history.
+
+## 2026-07-30 — Final actionable closeout
+
+- Contract A grounding is an accepted limit. Contract A checks billing-handoff completeness; it
+  does not certify field truth against product records. Contract B keeps the current grounded
+  hostile proof.
+- The analytics aggregation and prose-to-fields extractor are closed, not deferred backlog. Reopen
+  only with real prose-only cases that satisfy a new data gate. The deterministic gate stays the
+  sole hard blocker.
+- The planned repo-local presentation pass is superseded by the umbrella live desk and journey
+  surfaces. This repo owns direct gate reports, not the full-system presentation.
