@@ -8,10 +8,10 @@ things_to_know:
   - "Roadmap source: /Users/aditya/Documents/Projects/support/Old_files/archived-docs/SUPPORT_MASTER_PLAN.md (archived)."
   - "M4 front door: /Users/aditya/Documents/Projects/support/customer-support-ai-os/FRONT_DOOR.md."
   - "M4 Flow 0 trace: /Users/aditya/Documents/Projects/support/customer-support-ai-os/outputs/flow0_H1.json."
-  - "Contract B is a B2C PRODUCT-BUG hop, not billing; no B2C product-bug data exists yet (generator is billing-only, realtime fixtures are B2B/off-limits)."
+  - "Contract A is the B2C billing completeness hop; Contract B is the grounded B2B human-to-engineering hop."
   - "Roll-up's real finding: AI handoffs drop structured account/subscription IDs (not present in the transcript it reads); the gate catches + fills them."
-  - "Phase 4 (non-technical presentation polish) not started."
-updated_at: "2026-07-10"
+  - "Contract A grounding, analytics aggregation, the prose extractor, and a repo-local presentation pass are closed limits or superseded work, not pending tasks."
+updated_at: "2026-07-30"
 updated_by: "codex"
 ```
 
@@ -133,3 +133,14 @@ things_to_know:
 updated_at: "2026-06-26"
 updated_by: "claude"
 ```
+
+## 2026-07-30 — Final actionable dispositions
+
+- Contract A remains a completeness check with evidence-derived leniency. Product-record grounding
+  is not added to this billing proof; that is an accepted limit, not a hidden claim.
+- `gate_analytics.jsonl` remains raw audit evidence. No aggregation or LLM/GLiNER extractor is
+  planned. Reopening needs real accumulated prose-only cases and a new data-backed scope decision.
+- The repo-local non-technical presentation pass is superseded by the Support root live desk,
+  journey demo, and cross-system evidence pages. Handoff Engine continues to own gate evidence.
+- The dated phase and deferral sections above remain history. The shipped header and this section
+  govern current work: none is pending.

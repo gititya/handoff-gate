@@ -69,7 +69,9 @@ There are no real customers or call data, so success is **not** "is it real" —
 - Every block is logged (`gate_analytics.jsonl`) so the grounding heuristic's false-block rate is *measured*, not assumed.
 - Fixtures (synthetic data) are labeled as such; a block is a real intercept-and-hold, not a score.
 
-The grounding check is rule-based word-overlap — a labeled **stopgap**. Making it semantically smart is the deferred LLM-extractor; it is intentionally *not* built, and the analytics decide when it should be.
+The grounding check is rule-based word-overlap — a labeled **stopgap**. A semantic extractor was
+considered and intentionally not built. It is not pending work; only real accumulated prose-only
+cases plus a new scope decision can reopen it.
 
 ## Layout
 
