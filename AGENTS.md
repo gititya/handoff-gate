@@ -1,5 +1,8 @@
 # AGENTS.md — Handoff Quality Gate (handoff_agent)
 
+This repo is the case-quality organ of **Support Product**. The product map lives at
+`customer-support-ai-os/system-map.json`; read it before assuming this repo stands alone.
+
 Coding-agent context for this repo. Read `SKILL.md` for current phase state before doing anything. The authoritative design docs live in the Obsidian vault under `Customer support/handoff agent/` — `Handoff Quality Gate — Execution Plan.md` (the build sequence) and `Handoff Quality Gate — Contracts.md` (the locked Contract A, the load-bearing artifact).
 
 ## What this repo is

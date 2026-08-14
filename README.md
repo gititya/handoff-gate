@@ -1,5 +1,8 @@
 # Handoff Quality Gate
 
+This repo is the case-quality organ of **Support Product**. The product map lives at
+`customer-support-ai-os/system-map.json`; read it before assuming this repo stands alone.
+
 A deterministic (rule-based) gate that sits between support tiers and refuses to let a low-quality handoff move up. It intercepts the handoff note, checks it against a fixed contract, and **holds it until it's good enough** — it does not just score it.
 
 This shipped component is the mechanical handoff boundary in the wider Support system. Voice
