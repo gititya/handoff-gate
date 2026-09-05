@@ -1,17 +1,14 @@
 # BUILDS.md — Handoff Quality Gate
 
 ```yaml
-status: "shipped"
-current_state: "The deterministic Contract A and Contract B handoff gate is shipped and pinned in the cross-repository Flow 0 proof; clean notes release and hostile notes block."
-next_action: "No pending work for the shipped gate; a new contract, extractor, or product domain starts as new scope."
+status: "in-progress"
+current_state: "The public README presents a rule-based handoff gate tested on synthetic B2C and B2B cases, and the public tests now run without private sibling repositories or machine-specific paths."
+next_action: "Review and commit the public-readiness changes, then update Support Binder's Handoff pin before re-sealing the portfolio proof."
 things_to_know:
-  - "Roadmap source: /Users/aditya/Documents/Projects/support/Old_files/archived-docs/SUPPORT_MASTER_PLAN.md (archived)."
-  - "M4 front door: /Users/aditya/Documents/Projects/support/customer-support-ai-os/FRONT_DOOR.md."
-  - "M4 Flow 0 trace: /Users/aditya/Documents/Projects/support/customer-support-ai-os/outputs/flow0_H1.json."
-  - "Contract A is the B2C billing completeness hop; Contract B is the grounded B2B human-to-engineering hop."
-  - "Roll-up's real finding: AI handoffs drop structured account/subscription IDs (not present in the transcript it reads); the gate catches + fills them."
-  - "Contract A grounding, analytics aggregation, the prose extractor, and a repo-local presentation pass are closed limits or superseded work, not pending tasks."
-updated_at: "2026-07-30"
+  - "Contract A checks B2C billing completeness; Contract B checks B2B human-to-engineering notes."
+  - "Contract B grounding uses disclosed word overlap; Contract A does not verify field truth against product records."
+  - "The public unit suite uses a local HandoffNote-shaped stand-in; Support Binder owns the real cross-repository compatibility test."
+updated_at: "2026-09-05"
 updated_by: "codex"
 ```
 

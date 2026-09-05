@@ -1,19 +1,23 @@
-# Handoff Quality Gate
+# Handoff Gate
 
-A deterministic (rule-based) gate that sits between support tiers and refuses to let a low-quality handoff move up. It intercepts the handoff note, checks it against a fixed contract, and **holds it until it's good enough** — it does not just score it.
-
-This shipped component is the mechanical handoff boundary in the wider Support system. Voice
-Support creates the B2C note, this repo checks it, and the SHA-pinned harness replays the accepted
-H1 case. Its evidence is intentionally mixed: clean cases release and hostile cases block.
-
-The decision is mechanical and reproducible. LLMs only ever sit at the edges (writing notes, an optional soft judge, a deferred prose→fields extractor). **No LLM is in the pass/block decision path** — that's what makes every block auditable: the reason is always a fixed field check, not a model's opinion.
+**A handoff that is polite, confident, and missing the account, the charge, or the claim is not a handoff. The gate holds it and says exactly what is missing.**
 
 ## Two flows
 
 | Flow | Hop | Contract | Question it enforces |
 |------|-----|----------|----------------------|
 | 1 | AI bot → human (B2C billing) | A | Did the human get the account + the charge + the claim? |
-| 2 | Human → engineering (B2B product bug) | B | Did engineering get an *honest, grounded* escalation — not a cold dump or a confident guess? |
+| 2 | Human → engineering (B2B product bug) | B | Did engineering get an *honest, grounded* escalation—not a cold dump or a confident guess? |
+
+The rollups use synthetic B2C and B2B cases. Contract A uses 10 B2C seed cases; Contract B uses 11 B2B anchor cases.
+
+A deterministic (rule-based) gate that sits between support tiers and refuses to let a low-quality handoff move up. It intercepts the handoff note, checks it against a fixed contract, and **holds it until it's good enough** — it does not just score it.
+
+In the prototype, Voice Support creates the B2C note, this repo checks it, and the SHA-pinned
+harness replays the accepted H1 case. Its evidence is intentionally mixed: clean cases release
+and hostile cases block.
+
+The decision is mechanical and reproducible. LLMs only ever sit at the edges (writing notes, an optional soft judge, a deferred prose→fields extractor). **No LLM is in the pass/block decision path** — that's what makes every block auditable: the reason is always a fixed field check, not a model's opinion.
 
 **What each contract actually checks (honest scope):** Contract A (completeness check) — the
 Flow 1 / front-door showcase path — enforces **completeness with evidence-derived leniency**: required fields must
@@ -48,7 +52,7 @@ Prose-only open branches **pass** but carry a `structure_warning` → routed to 
 # Unit tests — the deterministic proof of every rule
 python3 -m pytest tests/ -q
 
-# Flow 2 live roll-up. Default = audit: every anchor on a clean transcript
+# Flow 2 model-written roll-up. Default = audit: every anchor on a clean transcript
 # PLUS the hostile set, reported as ONE honest number.
 python3 b2b_rollup.py
 
@@ -57,7 +61,7 @@ python3 b2b_rollup.py
 python3 b2b_rollup.py --profile hostile
 ```
 
-The headline is **not** 100% by design — the hostile cases block, and the grounding guard blocks live notes that drift from the evidence. A 100% pass rate here would mean the gate isn't doing its job.
+The headline is not a perfect pass rate by design: the hostile cases block, and the grounding guard blocks model-written notes that drift from the evidence. A perfect pass rate here would mean the gate is not doing its job.
 
 ## What "done / honest" means here
 
@@ -66,8 +70,8 @@ There are no real customers or call data, so success is **not** "is it real" —
 - Grading reads evidence, never a difficulty/resolution metadata label.
 - Correction fills system-of-record facts only — it never invents a diagnosis.
 - The headline number comes from a run where the agent **can** fail (audit/hostile), not a spoon-fed one.
-- Every block is logged (`gate_analytics.jsonl`) so the grounding heuristic's false-block rate is *measured*, not assumed.
-- Fixtures (synthetic data) are labeled as such; a block is a real intercept-and-hold, not a score.
+- The repo does not include an aggregated false-block rate. `docs/llm-extractor-deferral.md` states how that rate would be measured if real prose-only cases accumulate.
+- Fixtures are labeled as synthetic; a block is an implemented intercept-and-hold inside the prototype, not just a score.
 
 The grounding check is rule-based word-overlap — a labeled **stopgap**. A semantic extractor was
 considered and intentionally not built. It is not pending work; only real accumulated prose-only
@@ -77,7 +81,7 @@ cases plus a new scope decision can reopen it.
 
 - `contracts.py` — the contracts, leniency derivation, completeness + grounding checks.
 - `gate.py` — intercept-and-hold, correction modes, override lane, release.
-- `agent.py` — the live LLM that writes the candidate note (edge, not decision).
+- `agent.py` — the optional model writer for the candidate note (edge, not decision).
 - `b2b_rollup.py` — Flow 2 batch over `contract_b_anchors/`, clean + hostile profiles.
 - `rollup.py` — Flow 1 (Contract A) roll-up.
 - `docs/llm-extractor-deferral.md` — why the prose→fields extractor is deferred and data-gated.
