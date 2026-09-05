@@ -5,10 +5,9 @@ Run: cd handoff-engine && python -m pytest tests/ -q
 """
 import sys
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "support-binder"))
-sys.path.insert(0, "/Users/aditya/Documents/Projects/support/support-state-core/src")
 
 from contracts import (  # noqa: E402
     check_handoff,
@@ -26,14 +25,26 @@ from b2b_rollup import (  # noqa: E402
     grade_anchor,
     load_anchor,
 )
-from support_ontology import (  # noqa: E402
-    HandoffNote,
-    IssueType,
-    Risk,
-    RiskAssessment,
-    SignalSource,
-)
-from support_ontology.handoff_note import BranchRef, EvidenceBackedClaim  # noqa: E402
+
+
+class _HandoffNoteShape:
+    """Local stand-in for the JSON shape accepted at the public gate boundary."""
+
+    def __init__(self, payload: dict[str, Any]):
+        self.payload = payload
+
+    def model_dump(self, *, mode: str) -> dict[str, Any]:
+        assert mode in {"python", "json"}
+        return self.payload
+
+
+def _claim(claim: str, value: Any, *, source: str = "system_of_record") -> dict[str, Any]:
+    return {
+        "claim": claim,
+        "value": value,
+        "evidence_handles": [f"expected:{claim}"],
+        "source": source,
+    }
 
 
 # --- fixtures ---------------------------------------------------------------
@@ -216,64 +227,51 @@ def _contract_a_expected():
 
 def _note_from_contract_a(expected):
     facts = [
-        EvidenceBackedClaim(claim=key, value=value, evidence_handles=[f"expected:{key}"])
+        _claim(key, value)
         for key, value in expected.items()
         if key not in {"customer_account_identity", "customer_claim", "charge", "likely_cause", "confidence"}
     ]
-    return HandoffNote(
-        identity=EvidenceBackedClaim(
-            claim="customer_account_identity",
-            value=expected["customer_account_identity"],
-            evidence_handles=["expected:identity"],
-        ),
-        issue_type=IssueType.BILLING,
-        claim=EvidenceBackedClaim(
-            claim="customer_claim",
-            value=expected["customer_claim"],
-            evidence_handles=["expected:claim"],
-            source=SignalSource.CUSTOMER_STATED,
-        ),
-        charge_ref=EvidenceBackedClaim(
-            claim="charge",
-            value=expected["charge"],
-            evidence_handles=["expected:charge"],
-        ),
-        confirmed_facts=facts,
-        ruled_out=[BranchRef(summary=item) for item in expected["ruled_out_branches"]],
-        likely_cause=expected["likely_cause"],
-        confidence=expected["confidence"],
-        risk=RiskAssessment(level=Risk.MEDIUM),
-        handoff_reason=expected["next_step"],
-        gated_summary="Customer reports an unrecognized charge and asks for review.",
+    return _HandoffNoteShape(
+        {
+            "identity": _claim("customer_account_identity", expected["customer_account_identity"]),
+            "issue_type": "billing",
+            "claim": _claim(
+                "customer_claim",
+                expected["customer_claim"],
+                source="customer_stated",
+            ),
+            "charge_ref": _claim("charge", expected["charge"]),
+            "confirmed_facts": facts,
+            "ruled_out": [{"summary": item} for item in expected["ruled_out_branches"]],
+            "likely_cause": expected["likely_cause"],
+            "confidence": expected["confidence"],
+            "risk": {"level": "medium"},
+            "handoff_reason": expected["next_step"],
+            "gated_summary": "Customer reports an unrecognized charge and asks for review.",
+        }
     )
 
 
 def _note_from_contract_b(expected, *, open_state):
     facts = [
-        EvidenceBackedClaim(claim=key, value=value, evidence_handles=[f"expected:{key}"])
+        _claim(key, value)
         for key, value in expected.items()
         if key not in {"customer_account_identity", "system_discrepancy", "support_ruled_out", "likely_cause", "confidence", "open_unknowns"}
     ]
-    return HandoffNote(
-        identity=EvidenceBackedClaim(
-            claim="customer_account_identity",
-            value=expected["customer_account_identity"],
-            evidence_handles=["expected:identity"],
-        ),
-        issue_type=IssueType.PRODUCT_BUG,
-        claim=EvidenceBackedClaim(
-            claim="system_discrepancy",
-            value=expected["system_discrepancy"],
-            evidence_handles=["expected:system_discrepancy"],
-        ),
-        confirmed_facts=facts,
-        open_unknowns=expected.get("open_unknowns", []),
-        ruled_out=[BranchRef(summary=item) for item in expected["support_ruled_out"]],
-        likely_cause=expected["likely_cause"],
-        confidence=expected["confidence"],
-        risk=RiskAssessment(level=Risk.HIGH if open_state else Risk.MEDIUM),
-        handoff_reason=expected["specific_ask"],
-        gated_summary="Support is escalating the product issue with evidence handles.",
+    return _HandoffNoteShape(
+        {
+            "identity": _claim("customer_account_identity", expected["customer_account_identity"]),
+            "issue_type": "product_bug",
+            "claim": _claim("system_discrepancy", expected["system_discrepancy"]),
+            "confirmed_facts": facts,
+            "open_unknowns": expected.get("open_unknowns", []),
+            "ruled_out": [{"summary": item} for item in expected["support_ruled_out"]],
+            "likely_cause": expected["likely_cause"],
+            "confidence": expected["confidence"],
+            "risk": {"level": "high" if open_state else "medium"},
+            "handoff_reason": expected["specific_ask"],
+            "gated_summary": "Support is escalating the product issue with evidence handles.",
+        }
     )
 
 
