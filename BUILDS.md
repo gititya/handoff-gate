@@ -1,16 +1,20 @@
-# BUILDS.md — Handoff Quality Gate
-
-```yaml
-status: "in-progress"
-current_state: "The public README presents a rule-based handoff gate tested on synthetic B2C and B2B cases, and the public tests now run without private sibling repositories or machine-specific paths."
-next_action: "Review and commit the public-readiness changes, then update Support Binder's Handoff pin before re-sealing the portfolio proof."
+---
+status: "paused"
+current_state: "Transfers preserve useful facts and unknowns. Urgent exceptions record accountability; limited-access engineering requests must explain what needs checking."
+next_action: "Review the README wording before publication."
 things_to_know:
-  - "Contract A checks B2C billing completeness; Contract B checks B2B human-to-engineering notes."
-  - "Contract B grounding uses disclosed word overlap; Contract A does not verify field truth against product records."
-  - "The public unit suite uses a local HandoffNote-shaped stand-in; Support Binder owns the real cross-repository compatibility test."
-updated_at: "2026-09-05"
+  - "Local capability verification is not real-app or production acceptance."
+  - "Changes are prepared locally; no publication or Muesli integration is included."
+updated_at: "2026-09-17"
 updated_by: "codex"
-```
+---
+
+## Historical project notes
+
+The current status is the frontmatter above. Earlier counts and release statements below describe their dated versions.
+
+
+# BUILDS.md — Handoff Quality Gate
 
 **Repo:** `gititya/handoff-engine` · **Working dir:** `handoff-engine` · **Status:** shipped
 

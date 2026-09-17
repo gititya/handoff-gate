@@ -125,3 +125,8 @@ Known, accepted limitations (disclosed, not hidden): grounding + hostile harness
   sole hard blocker.
 - The planned repo-local presentation pass is superseded by the umbrella live desk and journey
   surfaces. This repo owns direct gate reports, not the full-system presentation.
+
+
+## Capability consolidation — 2026-09-16
+
+Current report: /Users/aditya/Documents/Projects/support/support-product/capability-readiness/RESULT.md. Handoff batch agent/contracts/gate/tests consolidated into sp1-generic-handoff without replacing investigation_contract. Local assembly pins component origins and Screen wheel. Speech startup allowance60s, request30s; stored audio passes, initial cold timeout retained. Fresh contextual questions4/4 after documented expectation correction; connected4/4 in5calls. No Muesli work, commits, merge or publication. Old Binder app bindings fail and remain historical; new source inventory is not a seal.

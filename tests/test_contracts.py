@@ -392,7 +392,8 @@ def test_override_required_releases_only_with_recorded_reason():
     package = run_gate(
         "b2b", h, _complete_handoff(open_state=True), state, None,
         check_fn=check_handoff_b, correction_mode="trusted_sources",
-        override_reason="customer_impact",
+        override_reason="customer_impact", override_by="rep-7",
+        override_recipient="on-call engineering", override_justification="Customer cannot complete time-critical processing",
     )
 
     assert package.blocked is True

@@ -14,7 +14,7 @@ from contracts import ALL_REQUIRED_KEYS, ALL_REQUIRED_KEYS_B
 
 
 MODEL = "claude-haiku-4-5-20251001"
-ENGINEERING_OUTPUT_KEYS = ALL_REQUIRED_KEYS_B + ["open_unknowns"]
+ENGINEERING_OUTPUT_KEYS = ALL_REQUIRED_KEYS_B + ["open_unknowns", "diagnostic_limit"]
 
 
 def build_transcript_text(turns: list[dict[str, Any]]) -> str:
@@ -100,7 +100,10 @@ Return ONLY a JSON object using these keys:
 Fill in what you can from the conversation and the case state. You don't need to
 be exhaustive — just get engineering what they need to pick it up. If you don't
 have something, leave that key out. If the cause is still open, put the remaining
-branches in open_unknowns."""
+branches in open_unknowns. If supplied state includes diagnostic_limit, copy it exactly
+and use its next_check as specific_ask. If support performed no checks, keep
+support_ruled_out empty; never invent ruled-out causes. If no diagnostic_limit
+is supplied, omit that field. Do not author access exceptions from the transcript."""
 
 
 def work_engineering_handoff(
@@ -119,6 +122,7 @@ def work_engineering_handoff(
         "candidate_branches": state.get("candidate_branches", []),
         "final_cause": state.get("final_cause", ""),
         "next_check": state.get("next_check", ""),
+        "diagnostic_limit": state.get("diagnostic_limit"),
     }
 
     import anthropic
