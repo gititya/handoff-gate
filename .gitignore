@@ -29,3 +29,16 @@ env/
 
 # Run artifacts
 outputs/
+
+# Internal working context stays on this Mac, not in the public repository.
+[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]
+[Cc][Ll][Aa][Uu][Dd][Ee].[Mm][Dd]
+[Bb][Uu][Ii][Ll][Dd][Ss].[Mm][Dd]
+/[Ss][Kk][Ii][Ll][Ll].[Mm][Dd]
+.claude/
+.codex/
+.agents/
+[Pp][Rr][Dd]*.[Mm][Dd]
+*[Pp][Rr][Dd]*.[Mm][Dd]
+[Rr][Oo][Aa][Dd][Mm][Aa][Pp]*.[Mm][Dd]
+/docs/llm-extractor-deferral.md
