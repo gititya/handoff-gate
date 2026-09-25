@@ -129,6 +129,12 @@ class GapReport:
         return self.missing_always + self.missing_other + self.evidence_gaps
 
 
+def _missing_required(value: Any) -> bool:
+    if isinstance(value, str) and value.strip().lower() in {"unknown", "tbd", "n/a", "none", "-", "?"}:
+        return True
+    return not value or _is_empty(value)
+
+
 def check_handoff(
     candidate: dict[str, Any],
     expected: dict[str, Any],
@@ -140,7 +146,7 @@ def check_handoff(
 
     for key in ALWAYS_REQUIRED_KEYS:
         val = candidate.get(key)
-        if not val or (isinstance(val, str) and not val.strip()):
+        if _missing_required(val):
             report.missing_always.append(key)
 
     cause_keys = ["likely_cause", "confidence"]
@@ -236,6 +242,7 @@ def from_handoff_note(note: Any, *, contract: str = "A") -> dict[str, Any]:
             "confidence": data.get("confidence"),
             "open_unknowns": data.get("open_unknowns", []),
             "candidate_branches": _branch_summaries(data.get("candidate_branches", [])),
+            **({"diagnostic_limit": data["diagnostic_limit"]} if "diagnostic_limit" in data else {}),
         }
 
     raise ValueError(f"Unsupported handoff contract: {contract}")
@@ -327,6 +334,11 @@ def _has_named_overlap(candidate_values: Any, evidence_values: Any) -> bool:
     return False
 
 
+def _each_has_named_overlap(candidate_values: Any, evidence_values: Any) -> bool:
+    values = _as_list(candidate_values)
+    return bool(values) and all(_has_named_overlap(value, evidence_values) for value in values)
+
+
 def _likely_cause_has_evidence(candidate: dict[str, Any], expected: dict[str, Any], state: dict[str, Any]) -> bool:
     likely_cause = candidate.get("likely_cause")
     if _is_empty(likely_cause):
@@ -334,6 +346,20 @@ def _likely_cause_has_evidence(candidate: dict[str, Any], expected: dict[str, An
     expected_cause = expected.get("likely_cause")
     final_cause = state.get("final_cause")
     return _has_named_overlap(likely_cause, [expected_cause, final_cause])
+
+def _supported_diagnostic_limit(candidate: dict[str, Any], state: dict[str, Any]) -> bool:
+    limitation = candidate.get("diagnostic_limit")
+    if not isinstance(limitation, dict) or limitation != state.get("diagnostic_limit"):
+        return False
+    for key in ("reason", "required_access", "next_check", "evidence_handle"):
+        if not isinstance(limitation.get(key), str) or _missing_required(limitation[key]):
+            return False
+    if limitation["next_check"] != candidate.get("specific_ask"):
+        return False
+    if limitation["next_check"].strip().lower().rstrip(".! ") in {"investigate", "please investigate", "look into it", "check logs"}:
+        return False
+    return limitation["evidence_handle"] in state.get("facts", [])
+
 
 def check_handoff_b(
     candidate: dict[str, Any],
@@ -351,21 +377,22 @@ def check_handoff_b(
     report = GapReport(leniency=leniency)
 
     for key in ALWAYS_REQUIRED_KEYS_B:
-        if _is_empty(candidate.get(key)):
+        if _missing_required(candidate.get(key)):
             report.missing_always.append(key)
 
-    for key in ["support_ruled_out", "impact_urgency"]:
-        if _is_empty(candidate.get(key)):
-            report.missing_other.append(key)
+    if _missing_required(candidate.get("impact_urgency")):
+        report.missing_other.append("impact_urgency")
+    if _is_empty(candidate.get("support_ruled_out")) and not _supported_diagnostic_limit(candidate, state):
+        report.missing_other.append("support_ruled_out")
 
     if not _is_empty(candidate.get("evidence_handles")):
         evidence_pool = state.get("facts", []) + expected.get("evidence_handles", [])
-        if not _has_named_overlap(candidate.get("evidence_handles"), evidence_pool):
+        if not _each_has_named_overlap(candidate.get("evidence_handles"), evidence_pool):
             report.evidence_gaps.append("evidence_handles_not_supported")
 
     if not _is_empty(candidate.get("support_ruled_out")):
         ruled_out_pool = state.get("ruled_out_branches", []) + expected.get("support_ruled_out", [])
-        if not _has_named_overlap(candidate.get("support_ruled_out"), ruled_out_pool):
+        if not _each_has_named_overlap(candidate.get("support_ruled_out"), ruled_out_pool):
             report.evidence_gaps.append("support_ruled_out_not_supported")
 
     cause_keys = ["likely_cause", "confidence"]
@@ -386,11 +413,11 @@ def check_handoff_b(
         candidate_branch_alias = candidate.get("candidate_branches")
         if not _is_empty(candidate.get("open_unknowns")):
             open_pool = state.get("candidate_branches", []) + expected.get("open_unknowns", [])
-            if not _has_named_overlap(candidate.get("open_unknowns"), open_pool):
+            if not _each_has_named_overlap(candidate.get("open_unknowns"), open_pool):
                 report.evidence_gaps.append("open_unknowns_not_supported")
         elif not _is_empty(candidate_branch_alias):
             open_pool = state.get("candidate_branches", []) + expected.get("open_unknowns", [])
-            if not _has_named_overlap(candidate_branch_alias, open_pool):
+            if not _each_has_named_overlap(candidate_branch_alias, open_pool):
                 report.evidence_gaps.append("open_unknowns_not_supported")
             else:
                 report.structure_warning = True

@@ -16,7 +16,6 @@ MODEL = "claude-haiku-4-5-20251001"
 
 ALLOWED_OVERRIDE_REASONS = {
     "sla_risk",
-    "vip_customer",
     "active_incident",
     "missing_tool_access",
     "engineering_owned_diagnostic",
@@ -138,8 +137,8 @@ def _records_view(state: dict[str, Any], expected: dict[str, Any]) -> dict[str, 
     elif "system_records" in fixture:
         base = dict(fixture["system_records"])
     else:
-        # Lab stand-in for a CRM/billing lookup: the mechanical fields only.
-        base = dict(expected or {})
+        # Missing operational records must not be filled from a test answer key.
+        base = {}
     return {k: v for k, v in base.items() if k in SYSTEM_OF_RECORD_FIELDS}
 
 
@@ -176,6 +175,7 @@ class HandoffPackage:
         self.human_review_flag = False
         self.human_review_reason = ""
         self.override_reason = ""
+        self.urgent_override: dict[str, str] | None = None
         self.unfillable_missing_fields: list[str] = []
 
     def release(self) -> None:
@@ -213,6 +213,9 @@ def run_gate(
     check_fn=check_handoff,
     correction_mode: str = "trusted_sources",
     override_reason: str = "",
+    override_by: str = "",
+    override_recipient: str = "",
+    override_justification: str = "",
 ) -> HandoffPackage:
     """Run the gate: check, block if needed, correct, release.
 
@@ -232,7 +235,14 @@ def run_gate(
     if override_reason:
         if override_reason not in ALLOWED_OVERRIDE_REASONS:
             raise ValueError(f"Unsupported override reason: {override_reason}")
+        details = {"released_by": override_by, "recipient": override_recipient,
+                   "reason": override_justification}
+        for field, value in details.items():
+            if not isinstance(value, str) or value.strip().lower() in {"", "unknown", "tbd", "n/a", "na", "none", "-", "?", "todo", "placeholder", "unspecified"}:
+                raise ValueError(f"Urgent override requires {field}")
         package.override_reason = override_reason
+        package.urgent_override = {key: value.strip() for key, value in details.items()}
+        package.urgent_override["reason_code"] = override_reason
 
     # Judge = soft signal. A disagreement routes to a human; it does not block.
     if judge_verdict is not None and not judge_verdict.get("pass", True):
